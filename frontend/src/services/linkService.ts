@@ -1,12 +1,11 @@
-import axios from "axios";
+import axios from 'axios';
+import { apiConfig } from '../lib/apiConfig';
+
+const apiClient = axios.create({
+  baseURL: apiConfig.baseUrl,
+});
 
 export const createShortLink = async (longUrl: string) => {
-    const response = await axios.post(
-        "http://localhost:8000/v1/links", 
-        {
-            longUrl,
-        },
-    ); 
-
-    return response.data;
+  const { data } = await apiClient.post('/v1/links', { longUrl });
+  return data;
 };

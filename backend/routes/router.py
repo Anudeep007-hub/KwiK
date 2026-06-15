@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
+import hashlib 
+import uuid
 # Local imports
-from backend.services import base62Converter, uniqueIDGenerator
+from backend.services import base62Converter, uniqueIDGenerator, geoLocation
   
+
 from backend.models.requests.linkRequest import LinkRequest 
 from backend.models.Link import Link
 from backend.models.ClickEvent import ClickEvent 
@@ -30,15 +33,40 @@ async def getTinyUrl(req: LinkRequest, db: Session = Depends(get_db)):
     return {"shortCode":shortCode} 
 
 @router.get("/{shortCode}") 
-async def getLongUrl(shortCode: str, db: Session = Depends(get_db)): 
+async def getLongUrl(shortCode: str, request:Request, db: Session = Depends(get_db)): 
     
     link = db.query(Link).filter(Link.shortCode == shortCode).first() 
     
     if not link:
         return {"message": "Link not found"} 
     if link.status != "ACTIVE":
-        return {"message": "Link disabled"}
+        return {"message": "Link disabled"} 
     
+    clientIp = request.client.host 
+    geoData = await geoLocation.getGeoData( clientIp ) 
+    eventId= str( uuid.uuid4() ) 
+    ipHash = hashlib.sha256( clientIp.encode() ).hexdigest() 
+    userAgent = request.headers.get("user-agent") 
+    referrer = request.headers.get("referrer") 
+    
+    clickEvent = ClickEvent(
+        eventId=eventId ,
+        shortCode=shortCode ,
+        
+        ipHash=ipHash ,
+        userAgent=userAgent ,
+        referrer=referrer ,
+        
+        country=geoData.get("country") ,
+        region = geoData.get("regionName") ,
+        city=geoData.get("city") ,
+        timezone=geoData.get("timezone") ,
+        isp=geoData.get("isp") ,
+    ) 
+    
+    db.add(clickEvent)
+    db.commit() 
+       
     return RedirectResponse(url=link.longUrl)
     
 
