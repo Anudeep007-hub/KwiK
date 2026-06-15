@@ -8,6 +8,11 @@ dotenv.load_dotenv()
 
 DB_URL = os.getenv("DB_URL")
 
+if not DB_URL:
+    raise Exception(
+        "DB_URL environment variable not found"
+    )
+
 if DB_URL.startswith("postgres://"):
     DB_URL = DB_URL.replace(
         "postgres://",
