@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 import hashlib 
 import uuid
 # Local imports
-from backend.services import base62Converter, uniqueIDGenerator, geoLocation
+from services import base62Converter, uniqueIDGenerator, geoLocation
   
 
-from backend.models.requests.linkRequest import LinkRequest 
-from backend.models.Link import Link
-from backend.models.ClickEvent import ClickEvent 
-from backend.models.Link import LinkStatus
-from backend.database.session import SessionLocal, get_db
+from models.requests.linkRequest import LinkRequest 
+from models.Link import Link
+from models.ClickEvent import ClickEvent 
+from models.Link import LinkStatus
+from database.session import SessionLocal, get_db
 
 
 

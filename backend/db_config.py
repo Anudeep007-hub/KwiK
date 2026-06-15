@@ -1,15 +1,22 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker 
-import urllib 
 from sqlalchemy.ext.declarative import declarative_base 
- 
-Base = declarative_base()
+import os
+import dotenv
 
-PASSWORD = f"Xxfhifnh@1728121" 
-encoded_password = urllib.parse.quote_plus(PASSWORD) 
+dotenv.load_dotenv()
 
-DB_URL = f"postgresql://postgres:{encoded_password}@localhost:5432/kwik_ink"
+DB_URL = os.getenv("DB_URL")
 
+if DB_URL.startswith("postgres://"):
+    DB_URL = DB_URL.replace(
+        "postgres://",
+        "postgresql://",
+        1
+    )
+    
 engine = create_engine(DB_URL)
 
 SessionLocal = sessionmaker(autoflush=False, bind=engine) 
+
+Base = declarative_base()

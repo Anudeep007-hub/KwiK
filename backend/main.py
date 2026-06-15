@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Local imports
-from backend.routes.router import router
-from backend.db_config import Base, engine 
+from routes.router import router
+from db_config import Base, engine 
 
 Base.metadata.create_all(bind=engine)
 
@@ -11,7 +11,7 @@ app = FastAPI()
 
 app.add_middleware( 
     CORSMiddleware,
-    allow_origins = ["*"],
+    allow_origins = ["https://kwik.ink"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

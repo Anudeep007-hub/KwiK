@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Boolean, String, TIMESTAMP, ForeignKey
 from sqlalchemy.sql import func
 # Local imports
-from backend.db_config import Base
+from db_config import Base
 
 class ClickEvent(Base):
     
