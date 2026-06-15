@@ -1,6 +1,6 @@
 import requests 
 
-async def getGeoData(ip: str):
+def getGeoData(ip: str):
     
     data = requests.get(
         f"http://ip-api.com/json/{ip}"

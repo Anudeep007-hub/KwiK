@@ -4,3 +4,5 @@ new.cpp
 test.ipynb
 __pycache__
 vir
+.dockerignore
+.env

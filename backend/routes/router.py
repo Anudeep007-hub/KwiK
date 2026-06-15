@@ -43,11 +43,12 @@ async def getLongUrl(shortCode: str, request:Request, db: Session = Depends(get_
         return {"message": "Link disabled"} 
     
     clientIp = request.client.host 
-    geoData = await geoLocation.getGeoData( clientIp ) 
+    geoData = geoLocation.getGeoData( clientIp )  
     eventId= str( uuid.uuid4() ) 
     ipHash = hashlib.sha256( clientIp.encode() ).hexdigest() 
     userAgent = request.headers.get("user-agent") 
-    referrer = request.headers.get("referrer") 
+    referer = request.headers.get("referer") 
+    
     
     clickEvent = ClickEvent(
         eventId=eventId ,
@@ -55,7 +56,7 @@ async def getLongUrl(shortCode: str, request:Request, db: Session = Depends(get_
         
         ipHash=ipHash ,
         userAgent=userAgent ,
-        referrer=referrer ,
+        referer=referer ,
         
         country=geoData.get("country") ,
         region = geoData.get("regionName") ,
