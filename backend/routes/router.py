@@ -45,7 +45,7 @@ async def getLongUrl(shortCode: str, request:Request, db: Session = Depends(get_
     clientIp = request.headers.get(
     "x-forwarded-for",
     request.client.host
-).split(" ")[0]
+).split(" ")[0].strip(",")
     geoData = geoLocation.getGeoData( clientIp )  
     eventId= str( uuid.uuid4() ) 
     ipHash = hashlib.sha256( clientIp.encode() ).hexdigest() 
