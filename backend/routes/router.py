@@ -42,7 +42,10 @@ async def getLongUrl(shortCode: str, request:Request, db: Session = Depends(get_
     if link.status != "ACTIVE":
         return {"message": "Link disabled"} 
     
-    clientIp = request.client.host 
+    clientIp = request.headers.get(
+    "x-forwarded-for",
+    request.client.host
+) 
     geoData = geoLocation.getGeoData( clientIp )  
     eventId= str( uuid.uuid4() ) 
     ipHash = hashlib.sha256( clientIp.encode() ).hexdigest() 
