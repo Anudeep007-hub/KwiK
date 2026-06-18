@@ -12,7 +12,6 @@ class ClickEvent(Base):
     timestamp = Column(TIMESTAMP, server_default=func.now(), index=True) 
     ipHash = Column(String(128))
     userAgent = Column(String(512))
-    referer = Column(String(2048), nullable=True) 
     country = Column(String(100), nullable=True) 
     region = Column(String(100), nullable=True) 
     city = Column(String(200), nullable=True) 

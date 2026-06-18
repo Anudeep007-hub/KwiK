@@ -11,7 +11,7 @@ from models.requests.linkRequest import LinkRequest
 from models.Link import Link
 from models.ClickEvent import ClickEvent 
 from models.Link import LinkStatus
-from database.session import SessionLocal, get_db
+from database.session import get_db
 
 
 
@@ -45,12 +45,13 @@ async def getLongUrl(shortCode: str, request:Request, db: Session = Depends(get_
     clientIp = request.headers.get(
     "x-forwarded-for",
     request.client.host
-).split(" ")[0].strip(",")
+).split(" ")[0].strip(",") # Taking the first IP
+    
+    
     geoData = geoLocation.getGeoData( clientIp )  
     eventId= str( uuid.uuid4() ) 
     ipHash = hashlib.sha256( clientIp.encode() ).hexdigest() 
     userAgent = request.headers.get("user-agent") 
-    referer = request.headers.get("referer") 
     
     geoDataValues = {
         "country":geoData.get("country") ,
@@ -69,7 +70,6 @@ async def getLongUrl(shortCode: str, request:Request, db: Session = Depends(get_
         
         ipHash=ipHash ,
         userAgent=userAgent ,
-        referer=referer ,
         
         country=geoData.get("country") ,
         region = geoData.get("regionName") ,
