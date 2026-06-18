@@ -49,6 +49,16 @@ async def getLongUrl(shortCode: str, request:Request, db: Session = Depends(get_
     userAgent = request.headers.get("user-agent") 
     referer = request.headers.get("referer") 
     
+    geoDataValues = {
+        "country":geoData.get("country") ,
+        "region" : geoData.get("regionName") ,
+        "city":geoData.get("city") ,
+        "timezone":geoData.get("timezone") ,
+        "isp":geoData.get("isp") ,
+} 
+    print(f"geoData values: {geoDataValues}")
+    print(f"Actual geoData: {geoData}")
+    
     
     clickEvent = ClickEvent(
         eventId=eventId ,

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KwiK</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Inter,sans-serif;
+        }
+
+        body{
+            background:#fff;
+            color:#111827;
+        }
+
+        nav{
+            height:70px;
+            border-bottom:1px solid #e5e7eb;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:0 60px;
+        }
+
+        .logo{
+            font-size:24px;
+            font-weight:700;
+        }
+
+        .nav-links{
+            display:flex;
+            gap:30px;
+        }
+
+        .nav-links a{
+            text-decoration:none;
+            color:#6b7280;
+        }
+
+        .hero{
+            max-width:900px;
+            margin:120px auto;
+            text-align:center;
+        }
+
+        .hero h1{
+            font-size:56px;
+            line-height:1.1;
+            margin-bottom:15px;
+        }
+
+        .hero p{
+            font-size:18px;
+            color:#6b7280;
+            margin-bottom:50px;
+        }
+
+        .url-box{
+            display:flex;
+            border:1px solid #e5e7eb;
+            border-radius:10px;
+            overflow:hidden;
+        }
+
+        .url-box input{
+            flex:1;
+            border:none;
+            padding:20px;
+            font-size:16px;
+            outline:none;
+        }
+
+        .url-box button{
+            border:none;
+            background:#2563eb;
+            color:white;
+            padding:0 35px;
+            cursor:pointer;
+        }
+
+        .stats{
+            margin-top:80px;
+            display:flex;
+            justify-content:center;
+            gap:100px;
+        }
+
+        .stat h2{
+            font-size:28px;
+        }
+
+        .stat p{
+            color:#6b7280;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div class="logo">KwiK</div>
+
+    <div class="nav-links">
+        <a href="#">Links</a>
+        <a href="#">Analytics</a>
+        <a href="#">Settings</a>
+    </div>
+</nav>
+
+<section class="hero">
+
+    <h1>Short links.<br>Detailed analytics.</h1>
+
+    <p>
+        Create shortened URLs and track every click.
+    </p>
+
+    <div class="url-box">
+        <input
+            type="text"
+            placeholder="Paste a long URL here..."
+        >
+
+        <button>Create</button>
+    </div>
+
+    <div class="stats">
+
+        <div class="stat">
+            <h2>14K+</h2>
+            <p>Clicks Tracked</p>
+        </div>
+
+        <div class="stat">
+            <h2>18</h2>
+            <p>Countries</p>
+        </div>
+
+        <div class="stat">
+            <h2>99.9%</h2>
+            <p>Availability</p>
+        </div>
+
+    </div>
+
+</section>
+
+</body>
+</html>
