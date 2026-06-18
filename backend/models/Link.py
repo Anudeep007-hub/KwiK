@@ -6,7 +6,7 @@ from db_config import Base
 
 class LinkStatus(str, Enum):
     ACTIVE = "ACTIVE" 
-    DESABLED = "DISABLED"
+    DISABLED = "DISABLED"
 
 class Link(Base):
 
@@ -16,5 +16,5 @@ class Link(Base):
     longUrl = Column(String(2048), nullable=False) 
     createdAt = Column(TIMESTAMP, server_default=func.now(), nullable=False) 
     expiresAt = Column(TIMESTAMP, nullable=True) 
-    status = Column(SQLEnum(LinkStatus), nullable=False)
+    status = Column(SQLEnum(LinkStatus), nullable=False, default=LinkStatus.ACTIVE)
     ownerId = Column(String, nullable=True)
