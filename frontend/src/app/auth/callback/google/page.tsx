@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as linkService from '@/services/linkService';
 
-function GitHubCallbackContent() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -28,13 +28,13 @@ function GitHubCallbackContent() {
       }
 
       try {
-        const response = await linkService.handleGitHubCallback(code, state);
+        const response = await linkService.handleGoogleCallback(code, state);
         if (response?.token && response?.user) {
           login(response.token, response.user);
           router.push('/links');
         }
       } catch (error) {
-        console.error('GitHub callback error:', error);
+        console.error('Google callback error:', error);
         router.push('/login?error=auth_failed');
       }
     };
@@ -48,16 +48,16 @@ function GitHubCallbackContent() {
         <div className="mb-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
         </div>
-        <p className="text-gray-600">Authenticating with GitHub...</p>
+        <p className="text-gray-600">Authenticating with Google...</p>
       </div>
     </div>
   );
 }
 
-export default function GitHubCallbackPage() {
+export default function GoogleCallbackPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <GitHubCallbackContent />
+      <GoogleCallbackContent />
     </Suspense>
   );
 }

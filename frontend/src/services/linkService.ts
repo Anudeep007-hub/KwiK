@@ -31,10 +31,10 @@ export async function getGoogleLoginUrl() {
 }
 
 export async function handleGitHubCallback(code: string, state: string) {
-  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/callback/github`, {
+  const params = new URLSearchParams({ code, state });
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/callback/github?${params}`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ code, state }),
   });
 
   if (!response.ok) {
@@ -45,10 +45,10 @@ export async function handleGitHubCallback(code: string, state: string) {
 }
 
 export async function handleGoogleCallback(code: string, state: string) {
-  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/callback/google`, {
+  const params = new URLSearchParams({ code, state });
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/callback/google?${params}`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ code, state }),
   });
 
   if (!response.ok) {
