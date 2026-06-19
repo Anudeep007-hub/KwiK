@@ -12,9 +12,7 @@ app = FastAPI()
 # Keep the deployed frontend origin, and add local Vite origins for the
 # FigmaFrontend-based app running from frontend/.
 allowed_origins = [
-    "https://kwi-k.vercel.app",
-    "http://localhost:3002",
-    "http://localhost:3000",
+    "https://kwi-k.vercel.app"
 ]
 
 app.add_middleware( 
