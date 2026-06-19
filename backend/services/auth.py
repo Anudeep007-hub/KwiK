@@ -38,8 +38,8 @@ class JWTHandler:
         payload = {
             "sub": user_id,
             "email": email,
-            "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(datetime.timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+            "iat": datetime.now(datetime.timezone.utc),
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         return token

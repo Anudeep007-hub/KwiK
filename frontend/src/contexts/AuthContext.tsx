@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiConfig } from '@/services/apiConfig';
 
 interface User {
   id: string;
@@ -57,7 +58,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!token) return;
 
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(`${apiConfig.baseUrl}/v1/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
