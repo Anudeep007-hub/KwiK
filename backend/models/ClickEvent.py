@@ -8,7 +8,8 @@ class ClickEvent(Base):
     __tablename__ = "click_events" 
     
     eventId = Column(String(32), primary_key=True)
-    shortCode = Column(String(16), ForeignKey("links.shortCode")) 
+    shortCode = Column(String(16), ForeignKey("links.shortCode"), index=True) 
+    userId = Column(String(64), ForeignKey("users.id"), index=True)
     timestamp = Column(TIMESTAMP, server_default=func.now(), index=True) 
     ipHash = Column(String(128))
     userAgent = Column(String(512))

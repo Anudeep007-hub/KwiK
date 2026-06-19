@@ -1,10 +1,107 @@
 import { apiConfig } from "./apiConfig";
-import type { ClickEvent, Issue, Link } from "../types/api";
+import type { ClickEvent, Issue, Link, LinkStatus } from "../types/api";
 
+// Helper function to get auth headers
+function getAuthHeaders(): HeadersInit {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+// Authentication endpoints
+export async function getGitHubLoginUrl() {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/login/github`);
+  if (!response.ok) {
+    throw new Error('Unable to get GitHub login URL');
+  }
+  return response.json() as Promise<{ url: string; state: string }>;
+}
+
+export async function getGoogleLoginUrl() {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/login/google`);
+  if (!response.ok) {
+    throw new Error('Unable to get Google login URL');
+  }
+  return response.json() as Promise<{ url: string; state: string }>;
+}
+
+export async function handleGitHubCallback(code: string, state: string) {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/callback/github`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ code, state }),
+  });
+
+  if (!response.ok) {
+    throw new Error('GitHub authentication failed');
+  }
+
+  return response.json() as Promise<{ token: string; user: any }>;
+}
+
+export async function handleGoogleCallback(code: string, state: string) {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/callback/google`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ code, state }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Google authentication failed');
+  }
+
+  return response.json() as Promise<{ token: string; user: any }>;
+}
+
+export async function getCurrentUser() {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/me`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Unable to fetch current user');
+  }
+
+  return response.json() as Promise<any>;
+}
+
+export async function updateUserProfile(name: string) {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/me`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ name }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Unable to update user profile');
+  }
+
+  return response.json() as Promise<any>;
+}
+
+export async function logout() {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/auth/logout`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Unable to logout');
+  }
+
+  return response.json();
+}
+
+// Link endpoints
 export async function createShortLink(longUrl: string) {
   const response = await fetch(`${apiConfig.baseUrl}/v1/links`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ longUrl }),
   });
 
@@ -16,7 +113,9 @@ export async function createShortLink(longUrl: string) {
 }
 
 export async function getLinks() {
-  const response = await fetch(`${apiConfig.baseUrl}/v1/links`);
+  const response = await fetch(`${apiConfig.baseUrl}/v1/links`, {
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw new Error("Unable to load links");
@@ -26,7 +125,9 @@ export async function getLinks() {
 }
 
 export async function getLink(shortCode: string) {
-  const response = await fetch(`${apiConfig.baseUrl}/v1/links/${shortCode}`);
+  const response = await fetch(`${apiConfig.baseUrl}/v1/links/${shortCode}`, {
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw new Error("Unable to load link");
@@ -35,11 +136,28 @@ export async function getLink(shortCode: string) {
   return response.json() as Promise<Link>;
 }
 
+export async function updateLinkStatus(shortCode: string, status: LinkStatus) {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/links/${shortCode}/status`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to update link status");
+  }
+
+  return response.json() as Promise<Link>;
+}
+
+// Click events endpoints
 export async function getClickEvents(shortCode?: string) {
   const path = shortCode
     ? `/v1/links/${shortCode}/events`
     : "/v1/click-events";
-  const response = await fetch(`${apiConfig.baseUrl}${path}`);
+  const response = await fetch(`${apiConfig.baseUrl}${path}`, {
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw new Error("Unable to load click events");
@@ -48,8 +166,11 @@ export async function getClickEvents(shortCode?: string) {
   return response.json() as Promise<ClickEvent[]>;
 }
 
+// GitHub issues endpoint
 export async function getGitHubIssues() {
-  const response = await fetch(`${apiConfig.baseUrl}/v1/github/issues`);
+  const response = await fetch(`${apiConfig.baseUrl}/v1/github/issues`, {
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     const data = await response.json().catch(() => null);

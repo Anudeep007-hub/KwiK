@@ -1,19 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import * as linkService from "@/services/linkService";
 
 const mono = "var(--font-mono, 'JetBrains Mono', monospace)";
 
 export function SettingsPage() {
-  const [name, setName] = useState("user_01");
-  const [email, setEmail] = useState("user@example.com");
+  const { user, refreshUser } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [provider, setProvider] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
   const [revealed, setRevealed] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setProvider(user.provider || "");
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError("");
+    try {
+      await linkService.updateUserProfile(name);
+      await refreshUser();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save settings");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-40 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-60"></div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-8">
@@ -38,6 +75,7 @@ export function SettingsPage() {
                 setter: setName,
                 type: "text",
                 placeholder: "Your name",
+                editable: true,
               },
               {
                 label: "Email Address",
@@ -45,6 +83,15 @@ export function SettingsPage() {
                 setter: setEmail,
                 type: "email",
                 placeholder: "you@example.com",
+                editable: false,
+              },
+              {
+                label: "Provider",
+                value: provider.charAt(0).toUpperCase() + provider.slice(1),
+                setter: () => {},
+                type: "text",
+                placeholder: "Provider",
+                editable: false,
               },
             ].map((field) => (
               <div key={field.label}>
@@ -54,18 +101,29 @@ export function SettingsPage() {
                 <input
                   type={field.type}
                   value={field.value}
-                  onChange={(e) => field.setter(e.target.value)}
+                  onChange={(e) => {
+                    if (field.editable) field.setter(e.target.value);
+                  }}
                   placeholder={field.placeholder}
-                  className="w-full h-9 px-3 text-sm border border-[#E5E7EB] rounded focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white text-[#111827]"
+                  disabled={!field.editable}
+                  className={`w-full h-9 px-3 text-sm border border-[#E5E7EB] rounded focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white text-[#111827] ${
+                    !field.editable ? "bg-[#F9FAFB] cursor-not-allowed" : ""
+                  }`}
                 />
               </div>
             ))}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+                {error}
+              </div>
+            )}
             <div className="pt-1">
               <button
                 onClick={handleSave}
-                className="h-9 px-4 bg-[#2563EB] text-white text-sm font-semibold rounded hover:bg-[#1D4ED8] transition-colors"
+                disabled={isSaving}
+                className="h-9 px-4 bg-[#2563EB] text-white text-sm font-semibold rounded hover:bg-[#1D4ED8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saved ? "Saved" : "Save Changes"}
+                {isSaving ? "Saving..." : saved ? "Saved" : "Save Changes"}
               </button>
             </div>
           </div>
@@ -86,33 +144,12 @@ export function SettingsPage() {
                   Production Key
                 </p>
                 <p className="text-xs text-[#9CA3AF] mt-0.5">
-                  Created Jun 1, 2025 · Last used 2 hours ago
+                  Coming soon
                 </p>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <code
-                  className="text-xs bg-[#F9FAFB] border border-[#E5E7EB] px-3 py-1.5 rounded text-[#6B7280] select-all"
-                  style={{ fontFamily: mono }}
-                >
-                  {revealed
-                    ? "kwk_prod_4f2a8b3c9e1d7f6a2b5c8e3d1f4a7b9c"
-                    : "kwk_prod_••••••••••••••••••••••••••••4f2a"}
-                </code>
-                <button
-                  onClick={() => setRevealed((v) => !v)}
-                  className="h-8 px-3 text-xs font-medium border border-[#E5E7EB] rounded hover:bg-[#F9FAFB] transition-colors text-[#374151]"
-                >
-                  {revealed ? "Hide" : "Reveal"}
-                </button>
-                <button className="h-8 px-3 text-xs font-medium border border-[#FCA5A5] text-[#DC2626] rounded hover:bg-[#FEF2F2] transition-colors">
-                  Revoke
-                </button>
+              <div className="text-xs text-[#9CA3AF]">
+                API key generation feature coming soon
               </div>
-            </div>
-            <div className="border-t border-[#F3F4F6] pt-4">
-              <button className="flex items-center gap-1.5 h-8 px-3 text-xs font-medium border border-[#E5E7EB] rounded hover:bg-[#F9FAFB] transition-colors text-[#374151]">
-                + Generate New Key
-              </button>
             </div>
           </div>
         </section>
@@ -130,40 +167,16 @@ export function SettingsPage() {
               <input
                 type="url"
                 placeholder="https://your-server.com/webhook"
-                className="flex-1 h-9 px-3 text-sm border border-[#E5E7EB] rounded focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white text-[#111827] placeholder:text-[#9CA3AF]"
+                disabled
+                className="flex-1 h-9 px-3 text-sm border border-[#E5E7EB] rounded bg-[#F9FAFB] text-[#6B7280] placeholder:text-[#9CA3AF] cursor-not-allowed"
               />
-              <button className="h-9 px-4 text-sm font-medium border border-[#E5E7EB] rounded hover:bg-[#F9FAFB] transition-colors text-[#374151] whitespace-nowrap">
+              <button disabled className="h-9 px-4 text-sm font-medium border border-[#E5E7EB] rounded text-[#9CA3AF] whitespace-nowrap cursor-not-allowed">
                 Add Endpoint
               </button>
             </div>
             <p className="text-xs text-[#9CA3AF] mt-2">
-              Events: <code style={{ fontFamily: mono }}>click.created</code>,{" "}
-              <code style={{ fontFamily: mono }}>link.disabled</code>,{" "}
-              <code style={{ fontFamily: mono }}>link.expired</code>
+              Webhooks feature coming soon
             </p>
-          </div>
-        </section>
-
-        {/* Danger Zone */}
-        <section className="border border-[#FCA5A5] rounded overflow-hidden">
-          <div className="px-6 py-3.5 border-b border-[#FCA5A5] bg-[#FEF2F2]">
-            <h2 className="text-sm font-semibold text-[#DC2626]">
-              Danger Zone
-            </h2>
-          </div>
-          <div className="p-6 flex items-center justify-between gap-6">
-            <div>
-              <p className="text-sm font-medium text-[#111827]">
-                Delete Account
-              </p>
-              <p className="text-xs text-[#6B7280] mt-0.5">
-                Permanently delete your account and all associated links. This
-                action cannot be undone.
-              </p>
-            </div>
-            <button className="h-9 px-4 text-sm font-medium border border-[#FCA5A5] text-[#DC2626] rounded hover:bg-[#FEF2F2] transition-colors whitespace-nowrap shrink-0">
-              Delete Account
-            </button>
           </div>
         </section>
       </div>

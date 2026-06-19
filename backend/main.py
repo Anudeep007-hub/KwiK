@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Local imports
-from routes.router import router
+from routes import router
 from db_config import Base, engine 
 
 Base.metadata.create_all(bind=engine)
@@ -14,6 +14,7 @@ app = FastAPI()
 allowed_origins = [
     "https://kwi-k.vercel.app",
     "http://localhost:3002",
+    "http://localhost:3000",
 ]
 
 app.add_middleware( 

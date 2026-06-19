@@ -10,8 +10,8 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { ClickEvent } from "../../types/api";
-import { getClickEvents } from "../../services/linkService";
+import type { ClickEvent, Link as LinkType } from "../../types/api";
+import { getClickEvents, getLinks } from "../../services/linkService";
 
 const mono = "var(--font-mono, 'JetBrains Mono', monospace)";
 
@@ -142,6 +142,8 @@ const DistTable = ({ title, data }: DistProps) => (
 );
 
 export function AnalyticsPage() {
+  const [links, setLinks] = useState<LinkType[]>([]);
+  const [selectedShortCode, setSelectedShortCode] = useState<string>("ALL");
   const [events, setEvents] = useState<ClickEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -149,21 +151,44 @@ export function AnalyticsPage() {
   useEffect(() => {
     let active = true;
 
-    getClickEvents()
+    getLinks()
       .then((data) => {
-        if (active) setEvents(data);
+        if (active) setLinks(data);
       })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "Unable to load analytics");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+      .catch(() => {
+        // Links list is optional for the analytics selector.
       });
 
     return () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const fetchEvents = () => {
+      getClickEvents(selectedShortCode === "ALL" ? undefined : selectedShortCode)
+        .then((data) => {
+          if (active) setEvents(data);
+        })
+        .catch((err) => {
+          if (active) setError(err instanceof Error ? err.message : "Unable to load analytics");
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    };
+
+    fetchEvents();
+    timer = setInterval(fetchEvents, 10000);
+
+    return () => {
+      active = false;
+      if (timer) clearInterval(timer);
+    };
+  }, [selectedShortCode]);
 
   const dailyClicks = getDailyClicks(events);
   const totalClicks = events.length;
@@ -190,10 +215,32 @@ export function AnalyticsPage() {
   return (
     <main className="max-w-5xl mx-auto px-6 py-8">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-[#111827]">Analytics</h1>
-        <p className="text-sm text-[#6B7280] mt-0.5">
-          Backend events · Last 30 days
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-[#111827]">Analytics</h1>
+            <p className="text-sm text-[#6B7280] mt-0.5">
+              {selectedShortCode === "ALL" ? "All links" : `Link /${selectedShortCode}`} · Last 30 days
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="analytics-target" className="text-sm text-[#6B7280] font-medium">
+              View analytics for
+            </label>
+            <select
+              id="analytics-target"
+              value={selectedShortCode}
+              onChange={(e) => setSelectedShortCode(e.target.value)}
+              className="h-10 px-3 text-sm border border-[#E5E7EB] rounded bg-white text-[#111827] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20"
+            >
+              <option value="ALL">All links</option>
+              {links.map((link) => (
+                <option key={link.shortCode} value={link.shortCode}>
+                  /{link.shortCode} {link.longUrl.replace(/^https?:\/\//, "")}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {loading && <p className="mb-4 text-sm text-[#9CA3AF]">Loading analytics...</p>}

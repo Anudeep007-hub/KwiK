@@ -5,6 +5,7 @@ test.ipynb
 __pycache__
 vir
 .dockerignore
-.env 
+.env
+.env.production 
 FigmaFrontend.zip
 FigmaFrontend

@@ -17,4 +17,4 @@ class Link(Base):
     createdAt = Column(TIMESTAMP, server_default=func.now(), nullable=False) 
     expiresAt = Column(TIMESTAMP, nullable=True) 
     status = Column(SQLEnum(LinkStatus), nullable=False, default=LinkStatus.ACTIVE)
-    ownerId = Column(String, nullable=True)
+    ownerId = Column(String, ForeignKey("users.id"), nullable=True, index=True)
