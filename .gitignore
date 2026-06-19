@@ -5,4 +5,6 @@ test.ipynb
 __pycache__
 vir
 .dockerignore
-.env
+.env 
+FigmaFrontend.zip
+FigmaFrontend
