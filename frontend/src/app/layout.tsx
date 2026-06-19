@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./styles.css";
-import { LayoutHeader } from "./components/Layout";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthGate } from "@/contexts/AuthGate";
 
 export const metadata: Metadata = {
   title: "KwiK",
@@ -17,8 +17,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen bg-white">
         <AuthProvider>
-          <LayoutHeader />
-          {children}
+          <AuthGate>{children}</AuthGate>
         </AuthProvider>
       </body>
     </html>

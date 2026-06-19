@@ -2,24 +2,15 @@ import os
 
 from fastapi import FastAPI 
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
 
 # Local imports
 from routes import router
 from db_config import Base, engine 
+from services.schema import ensure_runtime_schema
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-def ensure_runtime_schema():
-    """Add columns introduced after initial create_all() deployments."""
-    with engine.begin() as connection:
-        connection.execute(text('ALTER TABLE links ADD COLUMN IF NOT EXISTS "ownerId" VARCHAR'))
-        connection.execute(text('ALTER TABLE click_events ADD COLUMN IF NOT EXISTS "userId" VARCHAR(64)'))
-        connection.execute(text('CREATE INDEX IF NOT EXISTS ix_links_ownerId ON links ("ownerId")'))
-        connection.execute(text('CREATE INDEX IF NOT EXISTS ix_click_events_userId ON click_events ("userId")'))
-
 
 ensure_runtime_schema()
 
@@ -38,6 +29,7 @@ allowed_origins = [*default_origins, *env_origins]
 app.add_middleware( 
     CORSMiddleware,
     allow_origins = allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -34,7 +34,6 @@ export async function handleGitHubCallback(code: string, state: string) {
   const params = new URLSearchParams({ code, state });
   const response = await fetch(`${apiConfig.baseUrl}/v1/auth/callback/github?${params}`, {
     method: 'POST',
-    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -48,7 +47,6 @@ export async function handleGoogleCallback(code: string, state: string) {
   const params = new URLSearchParams({ code, state });
   const response = await fetch(`${apiConfig.baseUrl}/v1/auth/callback/google?${params}`, {
     method: 'POST',
-    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
