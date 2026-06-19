@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect,Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as linkService from '@/services/linkService';
 import { Button } from '@/app/components/ui/button';
+import { Divide } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,7 +69,10 @@ export default function LoginPage() {
     }
   };
 
-  return (
+  return ( 
+    <Suspense fallback={ <div>Loading...</div>}>
+
+
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="w-full max-w-md rounded-lg bg-white shadow-lg">
         <div className="px-6 py-8">
@@ -129,5 +133,7 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+
+    </Suspense>
   );
 }
