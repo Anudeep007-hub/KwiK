@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useRouter } from "next/navigation";
 import { Copy, Check, ExternalLink, BarChart2, ArrowRight } from "lucide-react";
 import { getShortUrl } from "../../services/apiConfig";
 import { createShortLink } from "../../services/linkService";
@@ -10,7 +12,7 @@ export function LandingPage() {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
   const shortUrl = result ? getShortUrl(result) : "";
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -119,7 +121,7 @@ export function LandingPage() {
               </a>
               <button
                 type="button"
-                onClick={() => navigate("/analytics")}
+                onClick={() => router.push("/analytics")}
                 className="flex items-center gap-1.5 h-8 px-3 text-xs font-medium bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8] transition-colors"
               >
                 <BarChart2 size={12} />

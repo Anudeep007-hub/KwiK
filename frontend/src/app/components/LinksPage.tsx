@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useRouter } from "next/navigation";
 import { Search, Plus, ExternalLink } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import type { Link as LinkType, LinkStatus } from "../../types/api";
@@ -42,7 +44,7 @@ export function LinksPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     let active = true;
@@ -218,7 +220,7 @@ export function LinksPage() {
             {filtered.map((link, i) => (
               <tr
                 key={link.shortCode}
-                onClick={() => navigate(`/links/${link.shortCode}`)}
+                onClick={() => router.push(`/links/${link.shortCode}`)}
                 className={`cursor-pointer hover:bg-[#F9FAFB] transition-colors duration-100 group ${
                   i < filtered.length - 1 ? "border-b border-[#E5E7EB]" : ""
                 }`}

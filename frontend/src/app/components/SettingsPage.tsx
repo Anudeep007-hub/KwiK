@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 
 const mono = "var(--font-mono, 'JetBrains Mono', monospace)";

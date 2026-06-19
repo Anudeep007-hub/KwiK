@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useRouter } from "next/navigation";
 import { Copy, Check, ExternalLink, XCircle, BarChart2, ArrowLeft, CircleOff } from "lucide-react";
 import type { ClickEvent, Link as LinkType, LinkStatus } from "../../types/api";
 import { StatusBadge } from "./LinksPage";
@@ -26,8 +28,9 @@ const formatDate = (iso: string) =>
   });
 
 export function LinkDetailPage() {
-  const { shortCode } = useParams<{ shortCode: string }>();
-  const navigate = useNavigate();
+  const params = useParams<{ shortCode: string }>();
+  const shortCode = params.shortCode;
+  const router = useRouter();
 
   const [link, setLink] = useState<LinkType | null>(null);
   const [events, setEvents] = useState<ClickEvent[]>([]);
@@ -88,7 +91,7 @@ export function LinkDetailPage() {
     return (
       <main className="max-w-5xl mx-auto px-6 py-8">
         <button
-          onClick={() => navigate("/links")}
+          onClick={() => router.push("/links")}
           className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#111827] mb-6 transition-colors"
         >
           <ArrowLeft size={14} />
@@ -117,7 +120,7 @@ export function LinkDetailPage() {
   return (
     <main className="max-w-5xl mx-auto px-6 py-8">
       <button
-        onClick={() => navigate("/links")}
+        onClick={() => router.push("/links")}
         className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#111827] mb-6 transition-colors duration-100"
       >
         <ArrowLeft size={14} />
@@ -186,7 +189,7 @@ export function LinkDetailPage() {
               )}
             </button>
             <button
-              onClick={() => navigate("/analytics")}
+              onClick={() => router.push("/analytics")}
               className="flex items-center gap-1.5 h-9 px-3 text-sm font-semibold bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8] transition-colors"
             >
               <BarChart2 size={13} />
