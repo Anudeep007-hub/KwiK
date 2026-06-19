@@ -13,12 +13,11 @@ export function LayoutHeader() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
 
-  // Hide header on login page
-  if (pathname === "/login" || pathname.startsWith("/auth/callback")) {
-    return null;
-  }
+  const hideHeader = pathname === "/login" || pathname.startsWith("/auth/callback");
 
   useEffect(() => {
+    if (hideHeader) return; // skip redirect/fetch logic on login & callback pages
+
     if (!isAuthenticated) {
       router.push("/login");
       return;
@@ -39,7 +38,7 @@ export function LayoutHeader() {
     return () => {
       active = false;
     };
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, hideHeader]);
 
   const handleLogout = async () => {
     try {
@@ -51,6 +50,10 @@ export function LayoutHeader() {
       router.push("/login");
     }
   };
+
+  if (hideHeader) {
+    return null;
+  }
 
   return (
     <header className="border-b border-[#E5E7EB] sticky top-0 bg-white z-20">
@@ -106,11 +109,7 @@ export function LayoutHeader() {
           {user && (
             <div className="flex items-center gap-3">
               <span className="text-sm text-[#6B7280]">{user.name || user.email}</span>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-              >
+              <Button onClick={handleLogout} variant="outline" size="sm">
                 Logout
               </Button>
             </div>
