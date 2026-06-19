@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import Dict, Any
 
 from models.Link import Link
@@ -35,6 +36,41 @@ async def get_user_click_events(
         .all()
     )
     return [serialize_click_event(event) for event in events]
+
+
+@router.get("/links/{shortCode}/click-summary")
+async def get_link_click_summary(
+    shortCode: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Small verification endpoint for checking click tracking."""
+    user_id = current_user.get("sub")
+    link = db.query(Link).filter(
+        Link.shortCode == shortCode, Link.ownerId == user_id
+    ).first()
+
+    if not link:
+        raise HTTPException(status_code=404, detail="Link not found or unauthorized")
+
+    click_count = (
+        db.query(func.count(ClickEvent.eventId))
+        .filter(ClickEvent.shortCode == shortCode)
+        .scalar()
+    )
+    last_click = (
+        db.query(ClickEvent)
+        .filter(ClickEvent.shortCode == shortCode)
+        .order_by(ClickEvent.timestamp.desc())
+        .first()
+    )
+
+    return {
+        "shortCode": shortCode,
+        "ownerId": link.ownerId,
+        "clickCount": click_count or 0,
+        "lastClick": serialize_click_event(last_click) if last_click else None,
+    }
 
 
 @router.get("/links/{shortCode}/events")
