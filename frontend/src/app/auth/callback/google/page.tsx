@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as linkService from '@/services/linkService';
 
-export default function GoogleCallbackPage() {
+function GitHubCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -28,13 +28,13 @@ export default function GoogleCallbackPage() {
       }
 
       try {
-        const response = await linkService.handleGoogleCallback(code, state);
+        const response = await linkService.handleGitHubCallback(code, state);
         if (response?.token && response?.user) {
           login(response.token, response.user);
           router.push('/links');
         }
       } catch (error) {
-        console.error('Google callback error:', error);
+        console.error('GitHub callback error:', error);
         router.push('/login?error=auth_failed');
       }
     };
@@ -48,8 +48,16 @@ export default function GoogleCallbackPage() {
         <div className="mb-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
         </div>
-        <p className="text-gray-600">Authenticating with Google...</p>
+        <p className="text-gray-600">Authenticating with GitHub...</p>
       </div>
     </div>
+  );
+}
+
+export default function GitHubCallbackPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <GitHubCallbackContent />
+    </Suspense>
   );
 }

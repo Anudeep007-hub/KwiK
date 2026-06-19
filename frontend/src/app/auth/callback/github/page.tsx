@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as linkService from '@/services/linkService';
 
-export default function GitHubCallbackPage() {
+function GitHubCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -51,5 +51,13 @@ export default function GitHubCallbackPage() {
         <p className="text-gray-600">Authenticating with GitHub...</p>
       </div>
     </div>
+  );
+}
+
+export default function GitHubCallbackPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <GitHubCallbackContent />
+    </Suspense>
   );
 }
