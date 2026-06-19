@@ -132,12 +132,15 @@ export function LinkDetailPage() {
         <div className="flex items-start justify-between gap-6 flex-wrap">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 mb-1.5 flex-wrap">
-              <span
-                className="text-lg font-bold text-[#2563EB]"
+              <a
+                href={shortUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lg font-bold text-[#2563EB] no-underline hover:underline"
                 style={{ fontFamily: mono }}
               >
                 {shortUrl}
-              </span>
+              </a>
               <StatusBadge status={status} />
             </div>
             <p className="text-sm text-[#6B7280] mb-1 break-all">{link.longUrl}</p>
@@ -160,13 +163,13 @@ export function LinkDetailPage() {
               {copied ? "Copied" : "Copy"}
             </button>
             <a
-              href={link.longUrl}
+              href={shortUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 h-9 px-3 text-sm font-medium border border-[#E5E7EB] rounded hover:bg-[#F9FAFB] transition-colors text-[#374151] no-underline"
             >
               <ExternalLink size={13} />
-              Open
+              Open Short URL
             </a>
             <button
               onClick={() => setStatus((s) => (s === "ACTIVE" ? "DISABLED" : "ACTIVE"))}

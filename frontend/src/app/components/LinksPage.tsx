@@ -226,12 +226,16 @@ export function LinksPage() {
                 }`}
               >
                 <td className="py-3 px-4">
-                  <span
-                    className="text-[#2563EB] text-xs font-medium group-hover:underline"
+                  <a
+                    href={getShortUrl(link.shortCode)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[#2563EB] text-xs font-medium group-hover:underline no-underline"
                     style={{ fontFamily: mono }}
                   >
                     {getShortUrl(link.shortCode)}
-                  </span>
+                  </a>
                 </td>
                 <td className="py-3 px-4 max-w-[280px]">
                   <span
