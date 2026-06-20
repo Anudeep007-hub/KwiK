@@ -131,23 +131,7 @@ export function LandingPage() {
           </div>
         )}
 
-        <div className="mt-16 grid grid-cols-3 gap-8 w-full max-w-xl border-t border-[#E5E7EB] pt-12">
-          {[
-            { stat: "8,538", label: "total clicks tracked" },
-            { stat: "11", label: "countries reached" },
-            { stat: "99.9%", label: "redirect uptime" },
-          ].map((item) => (
-            <div key={item.label} className="text-center">
-              <p
-                className="text-2xl font-bold text-[#111827] mb-1"
-                style={{ fontFamily: "var(--font-mono, monospace)" }}
-              >
-                {item.stat}
-              </p>
-              <p className="text-xs text-[#9CA3AF]">{item.label}</p>
-            </div>
-          ))}
-        </div>
+
       </div>
     </main>
   );
