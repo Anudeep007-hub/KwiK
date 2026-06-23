@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +7,6 @@ import {  logout as logoutService } from "../../services/linkService";
 import { Button } from "./ui/button";
 
 export function LayoutHeader() {
-  const [openIssues, setOpenIssues] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -42,19 +40,6 @@ export function LayoutHeader() {
             {[
               { href: "/links", label: "Links" },
               { href: "/analytics", label: "Analytics" },
-              {
-                href: "/issues",
-                label: (
-                  <span className="flex items-center gap-1.5">
-                    Issues
-                    {openIssues > 0 && (
-                      <span className="text-[10px] font-semibold bg-[#F3F4F6] text-[#6B7280] px-1.5 py-0.5 rounded-full tabular-nums">
-                        {openIssues}
-                      </span>
-                    )}
-                  </span>
-                ),
-              },
               { href: "/settings", label: "Settings" },
             ].map((item) => {
               const isActive =

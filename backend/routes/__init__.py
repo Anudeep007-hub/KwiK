@@ -19,6 +19,5 @@ __all__ = [
     "auth_router",
     "links_router",
     "analytics_router",
-    "github_router",
     "redirect_router",
 ]
