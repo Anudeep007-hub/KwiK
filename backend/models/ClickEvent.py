@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, String, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, String, TIMESTAMP, ForeignKey
 from sqlalchemy.sql import func
 # Local imports
 from db_config import Base
