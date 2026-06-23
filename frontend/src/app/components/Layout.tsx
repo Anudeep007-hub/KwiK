@@ -4,34 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { getGitHubIssues, logout as logoutService } from "../../services/linkService";
+import {  logout as logoutService } from "../../services/linkService";
 import { Button } from "./ui/button";
 
 export function LayoutHeader() {
   const [openIssues, setOpenIssues] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
 
-    let active = true;
 
-    getGitHubIssues()
-      .then((issues) => {
-        if (active) {
-          setOpenIssues(issues.filter((issue) => issue.status === "OPEN").length);
-        }
-      })
-      .catch(() => {
-        if (active) setOpenIssues(0);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     try {
