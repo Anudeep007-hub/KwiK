@@ -44,130 +44,177 @@ async def login_google():
 
 
 @router.post("/callback/github")
-async def github_callback(code: str = Query(...), state: str = Query(...), db: Session = Depends(get_db)):
-    """Handle GitHub OAuth callback"""
-    if not code:
-        raise HTTPException(status_code=400, detail="Missing authorization code")
-    
-    # Exchange code for access token
-    access_token = await GitHubOAuth.exchange_code_for_token(code)
-    if not access_token:
-        raise HTTPException(status_code=400, detail="Failed to exchange authorization code")
-    
-    # Get user info from GitHub
-    user_info = await GitHubOAuth.get_user_info(access_token)
-    if not user_info:
-        raise HTTPException(status_code=400, detail="Failed to fetch user information")
-    
-    # Extract user data
-    provider_user_id = str(user_info.get("id"))
-    email = user_info.get("email") or f"github_{provider_user_id}@github.local"
-    name = user_info.get("name") or user_info.get("login")
-    
-    # Check if user exists, create if not
-    user = db.query(User).filter(
-        User.email == email
-    ).first()
+async def github_callback(
+    code: str = Query(...),
+    state: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    print("===== GITHUB CALLBACK =====")
+    print("CODE:", code)
+    print("STATE:", state)
 
-    if not user:
-        user = User(
-            id=generate_user_id(),
-            provider="github",
-            providerUserId=provider_user_id,
-            email=email,
-            name=name,
-        )
     try:
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        access_token = await GitHubOAuth.exchange_code_for_token(code)
+        print("ACCESS TOKEN:", bool(access_token))
+
+        if not access_token:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to exchange authorization code"
+            )
+
+        user_info = await GitHubOAuth.get_user_info(access_token)
+        print("USER INFO:", user_info)
+
+        if not user_info:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to fetch user information"
+            )
+
+        provider_user_id = str(user_info.get("id"))
+        email = user_info.get("email") or f"github_{provider_user_id}@github.local"
+        name = user_info.get("name") or user_info.get("login")
+
+        print("EMAIL:", email)
+        print("NAME:", name)
+        print("PROVIDER ID:", provider_user_id)
+
+        user = db.query(User).filter(
+            User.email == email
+        ).first()
+
+        if user:
+            print("EXISTING USER FOUND:", user.id)
+
+            if not user.provider:
+                user.provider = "github"
+
+            if not user.providerUserId:
+                user.providerUserId = provider_user_id
+
+            db.commit()
+            db.refresh(user)
+
+        else:
+            print("CREATING NEW USER")
+
+            user = User(
+                id=generate_user_id(),
+                provider="github",
+                providerUserId=provider_user_id,
+                email=email,
+                name=name,
+            )
+
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        jwt_token = JWTHandler.create_access_token(
+            user.id,
+            user.email
+        )
+
+        return {
+            "token": jwt_token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "provider": user.provider,
+            },
+        }
+
     except Exception as e:
         db.rollback()
-        print("GITHUB LOGIN ERROR:", str(e))
+        print("GITHUB CALLBACK ERROR:", repr(e))
         raise
-    # Generate JWT token
-    jwt_token = JWTHandler.create_access_token(user.id, user.email)
-    
-    return {
-        "token": jwt_token,
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "provider": user.provider,
-        },
-    }
 
 
 @router.post("/callback/google")
 async def google_callback(code: str = Query(...), state: str = Query(...), db: Session = Depends(get_db)):
-    """Handle Google OAuth callback"""
-    if not code:
-        raise HTTPException(status_code=400, detail="Missing authorization code")
-    
-    # Exchange code for tokens
-    token_response = await GoogleOAuth.exchange_code_for_token(code)
-    if not token_response:
-        raise HTTPException(status_code=400, detail="Failed to exchange authorization code")
-    
-    access_token = token_response.get("access_token")
-    
-    # Get user info from Google
-    user_info = await GoogleOAuth.get_user_info(access_token)
-    if not user_info:
-        raise HTTPException(status_code=400, detail="Failed to fetch user information")
-    
-    # Extract user data
-    provider_user_id = user_info.get("id")
-    email = user_info.get("email")
-    name = user_info.get("name")
-    
-    # Check if user exists, create if not
-    user = db.query(User).filter(
-        User.email == email
-    ).first()
+    print("===== GOOGLE CALLBACK =====")
+    print("CODE:", code)
+    print("STATE:", state)
 
-    if not user:
-        user = User(
-            id=generate_user_id(),
-            provider="google",
-            providerUserId=provider_user_id,
-            email=email,
-            name=name,
-        )
     try:
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        access_token = await GitHubOAuth.exchange_code_for_token(code)
+        print("ACCESS TOKEN:", bool(access_token))
+
+        if not access_token:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to exchange authorization code"
+            )
+
+        user_info = await GitHubOAuth.get_user_info(access_token)
+        print("USER INFO:", user_info)
+
+        if not user_info:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to fetch user information"
+            )
+
+        provider_user_id = str(user_info.get("id"))
+        email = user_info.get("email") or f"github_{provider_user_id}@google.local"
+        name = user_info.get("name") or user_info.get("login")
+
+        print("EMAIL:", email)
+        print("NAME:", name)
+        print("PROVIDER ID:", provider_user_id)
+
+        user = db.query(User).filter(
+            User.email == email
+        ).first()
+
+        if user:
+            print("EXISTING USER FOUND:", user.id)
+
+            if not user.provider:
+                user.provider = "google"
+
+            if not user.providerUserId:
+                user.providerUserId = provider_user_id
+
+            db.commit()
+            db.refresh(user)
+
+        else:
+            print("CREATING NEW USER")
+
+            user = User(
+                id=generate_user_id(),
+                provider="google",
+                providerUserId=provider_user_id,
+                email=email,
+                name=name,
+            )
+
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        jwt_token = JWTHandler.create_access_token(
+            user.id,
+            user.email
+        )
+
+        return {
+            "token": jwt_token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "provider": user.provider,
+            },
+        }
+
     except Exception as e:
         db.rollback()
-        print("GOOGLE LOGIN ERROR:", str(e))
+        print("GOOGLE CALLBACK ERROR:", repr(e))
         raise
-    
-    if not user:
-        user = User(
-            id=generate_user_id(),
-            provider="google",
-            providerUserId=provider_user_id,
-            email=email,
-            name=name,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    
-    # Generate JWT token
-    jwt_token = JWTHandler.create_access_token(user.id, user.email)
-    
-    return {
-        "token": jwt_token,
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "provider": user.provider,
-        },
-    }
 
 
 @router.post("/logout")
