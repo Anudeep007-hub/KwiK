@@ -1,5 +1,5 @@
 import { apiConfig } from "./apiConfig";
-import type { ClickEvent, Issue, Link, LinkStatus } from "../types/api";
+import type { ClickEvent, Link, LinkStatus } from "../types/api";
 
 // Helper function to get auth headers
 function getAuthHeaders(): HeadersInit {
@@ -164,16 +164,3 @@ export async function getClickEvents(shortCode?: string) {
   return response.json() as Promise<ClickEvent[]>;
 }
 
-// GitHub issues endpoint
-export async function getGitHubIssues() {
-  const response = await fetch(`${apiConfig.baseUrl}/v1/github/issues`, {
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => null);
-    throw new Error(data?.detail ?? "Unable to load GitHub issues");
-  }
-
-  return response.json() as Promise<Issue[]>;
-}

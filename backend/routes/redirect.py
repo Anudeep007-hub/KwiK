@@ -15,6 +15,24 @@ from services import geoLocation
 router = APIRouter(tags=["public"])
 logger = logging.getLogger(__name__)
 
+BROWSERS = {
+    "Brave": "Brave",
+    "Google Chrome": "Chrome",
+    "Microsoft Edge": "Edge",
+    "Opera": "Opera",
+    "Mozilla Firefox": "Firefox",
+    "Safari": "Safari",
+    "Samsung Internet": "Samsung Internet",
+    "Vivaldi": "Vivaldi",
+    "DuckDuckGo": "DuckDuckGo",
+    "Arc": "Arc",
+    "Yandex Browser": "Yandex",
+    "UC Browser": "UC Browser",
+    "QQ Browser": "QQ Browser",
+    "Internet Explorer": "Internet Explorer",
+}
+
+
 
 @router.get("/{shortCode}")
 async def redirect_short_url(
@@ -41,7 +59,17 @@ async def redirect_short_url(
     # Create click event record. uuid4().hex is 32 chars, matching eventId.
     eventId = uuid.uuid4().hex
     ipHash = hashlib.sha256(clientIp.encode()).hexdigest()
-    userAgent = request.headers.get("user-agent")
+    headers = request.headers
+
+    browser_info = headers.get("sec-ch-ua", "")
+
+    browser = "Unknown"
+
+    for key, value in BROWSERS.items():
+        if key in browser_info:
+            browser = value
+            break
+
 
     try:
         clickEvent = ClickEvent(    
@@ -49,7 +77,7 @@ async def redirect_short_url(
             shortCode=shortCode,
             userId=link.ownerId,
             ipHash=ipHash,
-            userAgent=userAgent,
+            userAgent=browser,
             country=geoData.get("country"),
             region=geoData.get("regionName"),
             city=geoData.get("city"),
