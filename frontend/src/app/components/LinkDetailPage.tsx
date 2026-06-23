@@ -6,7 +6,7 @@ import { Copy, Check, ExternalLink, XCircle, BarChart2, ArrowLeft, CircleOff } f
 import type { ClickEvent, Link as LinkType, LinkStatus } from "../../types/api";
 import { StatusBadge } from "./LinksPage";
 import { getShortUrl } from "../../services/apiConfig";
-import { getClickEvents, getLink } from "../../services/linkService";
+import { getClickEvents, getLink, updateLinkStatus } from "../../services/linkService";
 
 const mono = "var(--font-mono, 'JetBrains Mono', monospace)";
 
@@ -172,8 +172,19 @@ export function LinkDetailPage() {
               Open Short URL
             </a>
             <button
-              onClick={() => setStatus((s) => (s === "ACTIVE" ? "DISABLED" : "ACTIVE"))}
-              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium border rounded transition-colors ${
+              onClick={async () => {
+                      try {
+                        const newStatus =
+                          status === "ACTIVE" ? "DISABLED" : "ACTIVE";
+
+                        await updateLinkStatus(link.shortCode, newStatus);
+
+                        setStatus(newStatus);
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                                  className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium border rounded transition-colors ${
                 status === "ACTIVE"
                   ? "border-[#FCA5A5] text-[#DC2626] hover:bg-[#FEF2F2]"
                   : "border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
