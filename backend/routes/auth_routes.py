@@ -1,11 +1,8 @@
 from fastapi import APIRouter, Query, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
-
-# Local imports
 from db_config import SessionLocal
 from models.User import User
-from models.requests import updateUserRequest
 from services.auth import (
     JWTHandler,
     GitHubOAuth,
@@ -43,178 +40,112 @@ async def login_google():
     return {"url": url, "state": state}
 
 
-@router.get("/callback/github")
-async def github_callback(
-    code: str = Query(...),
-    state: str = Query(...),
-    db: Session = Depends(get_db)
-):
-    print("===== GITHUB CALLBACK =====")
-    print("CODE:", code)
-    print("STATE:", state)
-
-    try:
-        access_token = await GitHubOAuth.exchange_code_for_token(code)
-        print("ACCESS TOKEN:", bool(access_token))
-
-        if not access_token:
-            raise HTTPException(
-                status_code=400,
-                detail="Failed to exchange authorization code"
-            )
-
-        user_info = await GitHubOAuth.get_user_info(access_token)
-        print("USER INFO:", user_info)
-
-        if not user_info:
-            raise HTTPException(
-                status_code=400,
-                detail="Failed to fetch user information"
-            )
-
-        provider_user_id = str(user_info.get("id"))
-        email = user_info.get("email") or f"github_{provider_user_id}@github.local"
-        name = user_info.get("name") or user_info.get("login")
-
-        print("EMAIL:", email)
-        print("NAME:", name)
-        print("PROVIDER ID:", provider_user_id)
-
-        user = db.query(User).filter(
-            User.email == email
-        ).first()
-
-        if user:
-            print("EXISTING USER FOUND:", user.id)
-
-            if not user.provider:
-                user.provider = "github"
-
-            if not user.providerUserId:
-                user.providerUserId = provider_user_id
-
-            db.commit()
-            db.refresh(user)
-
-        else:
-            print("CREATING NEW USER")
-
-            user = User(
-                id=generate_user_id(),
-                provider="github",
-                providerUserId=provider_user_id,
-                email=email,
-                name=name,
-            )
-
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-
-        jwt_token = JWTHandler.create_access_token(
-            user.id,
-            user.email
+@router.post("/callback/github")
+async def github_callback(code: str = Query(...), state: str = Query(...), db: Session = Depends(get_db)):
+    """Handle GitHub OAuth callback"""
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code")
+    
+    # Exchange code for access token
+    access_token = await GitHubOAuth.exchange_code_for_token(code)
+    if not access_token:
+        raise HTTPException(status_code=400, detail="Failed to exchange authorization code")
+    
+    # Get user info from GitHub
+    user_info = await GitHubOAuth.get_user_info(access_token)
+    if not user_info:
+        raise HTTPException(status_code=400, detail="Failed to fetch user information")
+    
+    # Extract user data
+    provider_user_id = str(user_info.get("id"))
+    email = user_info.get("email") or f"github_{provider_user_id}@github.local"
+    name = user_info.get("name") or user_info.get("login")
+    
+    # Check if user exists, create if not
+    user = db.query(User).filter(
+        User.provider == "github",
+        User.providerUserId == provider_user_id
+    ).first()
+    
+    if not user:
+        user = User(
+            id=generate_user_id(),
+            provider="github",
+            providerUserId=provider_user_id,
+            email=email,
+            name=name,
         )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    # Generate JWT token
+    jwt_token = JWTHandler.create_access_token(user.id, user.email)
+    
+    return {
+        "token": jwt_token,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "provider": user.provider,
+        },
+    }
 
-        return {
-            "token": jwt_token,
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "name": user.name,
-                "provider": user.provider,
-            },
-        }
 
-    except Exception as e:
-        db.rollback()
-        print("GITHUB CALLBACK ERROR:", repr(e))
-        raise
-
-
-@router.get("/callback/google")
+@router.post("/callback/google")
 async def google_callback(code: str = Query(...), state: str = Query(...), db: Session = Depends(get_db)):
-    print("===== GOOGLE CALLBACK =====")
-    print("CODE:", code)
-    print("STATE:", state)
-
-    try:
-        access_token = await GitHubOAuth.exchange_code_for_token(code)
-        print("ACCESS TOKEN:", bool(access_token))
-
-        if not access_token:
-            raise HTTPException(
-                status_code=400,
-                detail="Failed to exchange authorization code"
-            )
-
-        user_info = await GitHubOAuth.get_user_info(access_token)
-        print("USER INFO:", user_info)
-
-        if not user_info:
-            raise HTTPException(
-                status_code=400,
-                detail="Failed to fetch user information"
-            )
-
-        provider_user_id = str(user_info.get("id"))
-        email = user_info.get("email") or f"github_{provider_user_id}@google.local"
-        name = user_info.get("name") or user_info.get("login")
-
-        print("EMAIL:", email)
-        print("NAME:", name)
-        print("PROVIDER ID:", provider_user_id)
-
-        user = db.query(User).filter(
-            User.email == email
-        ).first()
-
-        if user:
-            print("EXISTING USER FOUND:", user.id)
-
-            if not user.provider:
-                user.provider = "google"
-
-            if not user.providerUserId:
-                user.providerUserId = provider_user_id
-
-            db.commit()
-            db.refresh(user)
-
-        else:
-            print("CREATING NEW USER")
-
-            user = User(
-                id=generate_user_id(),
-                provider="google",
-                providerUserId=provider_user_id,
-                email=email,
-                name=name,
-            )
-
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-
-        jwt_token = JWTHandler.create_access_token(
-            user.id,
-            user.email
+    """Handle Google OAuth callback"""
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code")
+    
+    # Exchange code for tokens
+    token_response = await GoogleOAuth.exchange_code_for_token(code)
+    if not token_response:
+        raise HTTPException(status_code=400, detail="Failed to exchange authorization code")
+    
+    access_token = token_response.get("access_token")
+    
+    # Get user info from Google
+    user_info = await GoogleOAuth.get_user_info(access_token)
+    if not user_info:
+        raise HTTPException(status_code=400, detail="Failed to fetch user information")
+    
+    # Extract user data
+    provider_user_id = user_info.get("id")
+    email = user_info.get("email")
+    name = user_info.get("name")
+    
+    # Check if user exists, create if not
+    user = db.query(User).filter(
+        User.provider == "google",
+        User.providerUserId == provider_user_id
+    ).first()
+    
+    if not user:
+        user = User(
+            id=generate_user_id(),
+            provider="google",
+            providerUserId=provider_user_id,
+            email=email,
+            name=name,
         )
-
-        return {
-            "token": jwt_token,
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "name": user.name,
-                "provider": user.provider,
-            },
-        }
-
-    except Exception as e:
-        db.rollback()
-        print("GOOGLE CALLBACK ERROR:", repr(e))
-        raise
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    # Generate JWT token
+    jwt_token = JWTHandler.create_access_token(user.id, user.email)
+    
+    return {
+        "token": jwt_token,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "provider": user.provider,
+        },
+    }
 
 
 @router.post("/logout")
@@ -244,22 +175,25 @@ async def get_current_user_info(current_user: Dict[str, Any] = Depends(get_curre
     }
 
 
-
 @router.patch("/me")
 async def update_user_profile(
-    data: updateUserRequest.updateUserRequest,
+    name: Optional[str] = None,
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    user = db.query(User).filter(
-        User.id == current_user["sub"]
-    ).first()
-
-    user.name = data.name
-
+    """Update current user's profile information"""
+    user_id = current_user.get("sub")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if name:
+        user.name = name
+    
     db.commit()
     db.refresh(user)
-
+    
     return {
         "id": user.id,
         "email": user.email,
