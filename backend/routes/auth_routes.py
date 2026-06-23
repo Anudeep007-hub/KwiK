@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Query, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
+
+# Local imports
 from db_config import SessionLocal
 from models.User import User
+from models.requests import updateUserRequest
 from services.auth import (
     JWTHandler,
     GitHubOAuth,
@@ -175,25 +178,22 @@ async def get_current_user_info(current_user: Dict[str, Any] = Depends(get_curre
     }
 
 
+
 @router.patch("/me")
 async def update_user_profile(
-    name: Optional[str] = None,
+    data: updateUserRequest.updateUserRequest,
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Update current user's profile information"""
-    user_id = current_user.get("sub")
-    
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    if name:
-        user.name = name
-    
+    user = db.query(User).filter(
+        User.id == current_user["sub"]
+    ).first()
+
+    user.name = data.name
+
     db.commit()
     db.refresh(user)
-    
+
     return {
         "id": user.id,
         "email": user.email,

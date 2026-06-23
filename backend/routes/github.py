@@ -22,9 +22,7 @@ async def get_github_issues(
     """Get GitHub issues for the authenticated user"""
     user_id = current_user.get("sub")
 
-    # Try to get user's GitHub access token from auth provider
-    # For now, fall back to backend token if not stored
-    user = db.query(User).filter(User.id == user_id).first()
+
 
     github_token = os.getenv("GITHUB_TOKEN")
 
@@ -40,7 +38,6 @@ async def get_github_issues(
         "X-GitHub-Api-Version": "2022-11-28",
     }
     params = {
-        "filter": "assigned",
         "state": "all",
         "sort": "updated",
         "direction": "desc",

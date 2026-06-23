@@ -44,7 +44,7 @@ async def redirect_short_url(
     userAgent = request.headers.get("user-agent")
 
     try:
-        clickEvent = ClickEvent(
+        clickEvent = ClickEvent(    
             eventId=eventId,
             shortCode=shortCode,
             userId=link.ownerId,
