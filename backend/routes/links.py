@@ -127,5 +127,9 @@ async def update_link_status(
         .filter(ClickEvent.shortCode == shortCode)
         .scalar()
     )
+    data = serialize_link(link, click_count or 0)
 
-    return serialize_link(link, click_count or 0)
+    for k, v in data.items():
+        print(k, type(v), v)
+
+    return data
