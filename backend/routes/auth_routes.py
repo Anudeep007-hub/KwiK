@@ -43,7 +43,7 @@ async def login_google():
     return {"url": url, "state": state}
 
 
-@router.post("/callback/github")
+@router.get("/callback/github")
 async def github_callback(
     code: str = Query(...),
     state: str = Query(...),
@@ -132,7 +132,7 @@ async def github_callback(
         raise
 
 
-@router.post("/callback/google")
+@router.get("/callback/google")
 async def google_callback(code: str = Query(...), state: str = Query(...), db: Session = Depends(get_db)):
     print("===== GOOGLE CALLBACK =====")
     print("CODE:", code)
