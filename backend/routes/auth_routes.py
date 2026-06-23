@@ -72,7 +72,7 @@ async def github_callback(code: str = Query(...), state: str = Query(...), db: S
     if not user:
         user = User(
             id=generate_user_id(),
-            provider="google",
+            provider="github",
             providerUserId=provider_user_id,
             email=email,
             name=name,
@@ -83,7 +83,7 @@ async def github_callback(code: str = Query(...), state: str = Query(...), db: S
         db.refresh(user)
     except Exception as e:
         db.rollback()
-        print("GOOGLE LOGIN ERROR:", str(e))
+        print("GITHUB LOGIN ERROR:", str(e))
         raise
     # Generate JWT token
     jwt_token = JWTHandler.create_access_token(user.id, user.email)
@@ -124,9 +124,25 @@ async def google_callback(code: str = Query(...), state: str = Query(...), db: S
     
     # Check if user exists, create if not
     user = db.query(User).filter(
-        User.provider == "google",
-        User.providerUserId == provider_user_id
+        User.email == email
     ).first()
+
+    if not user:
+        user = User(
+            id=generate_user_id(),
+            provider="google",
+            providerUserId=provider_user_id,
+            email=email,
+            name=name,
+        )
+    try:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        print("GOOGLE LOGIN ERROR:", str(e))
+        raise
     
     if not user:
         user = User(
