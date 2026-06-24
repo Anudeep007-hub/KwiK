@@ -2,7 +2,8 @@ from fastapi import APIRouter, Query, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 from db_config import SessionLocal
-from models.User import User
+from models.User import User 
+from models.requests import updateUserRequest
 from services.auth import (
     JWTHandler,
     GitHubOAuth,
@@ -177,7 +178,7 @@ async def get_current_user_info(current_user: Dict[str, Any] = Depends(get_curre
 
 @router.patch("/me")
 async def update_user_profile(
-    name: Optional[str] = None,
+    name: updateUserRequest.updateUserRequest,
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

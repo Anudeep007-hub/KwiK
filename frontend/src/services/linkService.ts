@@ -71,7 +71,10 @@ export async function getCurrentUser() {
 export async function updateUserProfile(name: string) {
   const response = await fetch(`${apiConfig.baseUrl}/v1/auth/me`, {
     method: 'PATCH',
-    headers: getAuthHeaders(),
+    headers: {
+      ...getAuthHeaders() ,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ name }),
   });
 
