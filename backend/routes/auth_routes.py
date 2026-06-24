@@ -178,7 +178,7 @@ async def get_current_user_info(current_user: Dict[str, Any] = Depends(get_curre
 
 @router.patch("/me")
 async def update_user_profile(
-    name: updateUserRequest.updateUserRequest,
+    data: updateUserRequest.updateUserRequest,
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -189,8 +189,7 @@ async def update_user_profile(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    if name:
-        user.name = name
+    user.name = data.name
     
     db.commit()
     db.refresh(user)
