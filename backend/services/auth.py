@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
+from urllib.parse import urlencode
 
 load_dotenv()
 
@@ -22,7 +23,8 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GITHUB_OAUTH_URL = "https://github.com/login/oauth/access_token"
 GITHUB_USER_URL = "https://api.github.com/user"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-GOOGLE_USER_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+# GOOGLE_USER_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+GOOGLE_TOKEN_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 
 # Redirect URIs
 GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI", "http://localhost:3000/auth/callback/github")
@@ -68,9 +70,11 @@ class GitHubOAuth:
             "scope": "user:email",
             "state": state,
         }
-        query_string = "&".join([f"{k}={v}" for k, v in params.items()])
-        return f"https://github.com/login/oauth/authorize?{query_string}"
-    
+        # query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+        return (
+    "https://github.com/login/oauth/authorize?"
+    + urlencode(params)
+)
     @staticmethod
     async def exchange_code_for_token(code: str) -> Optional[str]:
         """Exchange authorization code for access token"""
@@ -105,8 +109,14 @@ class GitHubOAuth:
                         "Accept": "application/json",
                     },
                 )
-                if response.status_code == 200:
-                    return response.json()
+                # if response.status_code == 200:
+                #     return response.json()
+                print(response.status_code)
+                print(response.text)
+
+                response.raise_for_status()
+
+                return response.json()
         except Exception as e:
             print(f"Error fetching GitHub user info: {e}")
         return None
@@ -125,8 +135,21 @@ class GoogleOAuth:
             "scope": "openid email profile",
             "state": state,
         }
-        query_string = "&".join([f"{k}={v}" for k, v in params.items()])
-        return f"https://accounts.google.com/o/oauth2/v2/auth?{query_string}"
+        # query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+        params = {
+            "client_id": GOOGLE_CLIENT_ID,
+            "redirect_uri": GOOGLE_REDIRECT_URI,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "state": state,
+            "access_type": "offline",
+            "prompt": "consent",
+        }
+
+        return (
+            "https://accounts.google.com/o/oauth2/v2/auth?"
+            + urlencode(params)
+)
     
     @staticmethod
     async def exchange_code_for_token(code: str) -> Optional[Dict[str, str]]:
@@ -143,8 +166,15 @@ class GoogleOAuth:
                         "redirect_uri": GOOGLE_REDIRECT_URI,
                     },
                 )
-                if response.status_code == 200:
-                    return response.json()
+                # if response.status_code == 200:
+                #     return response.json()
+                print(response.status_code)
+                print(response.text)
+
+                response.raise_for_status()
+
+                return response.json()
+                
         except Exception as e:
             print(f"Error exchanging Google code: {e}")
         return None
@@ -158,8 +188,14 @@ class GoogleOAuth:
                     GOOGLE_USER_URL,
                     headers={"Authorization": f"Bearer {access_token}"},
                 )
-                if response.status_code == 200:
-                    return response.json()
+                # if response.status_code == 200:
+                #     return response.json()
+                print(response.status_code)
+                print(response.text)
+
+                response.raise_for_status()
+
+                return response.json()
         except Exception as e:
             print(f"Error fetching Google user info: {e}")
         return None
