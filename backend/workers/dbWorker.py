@@ -18,14 +18,22 @@ logger = logging.getLogger(__name__)
 
 
 def parse_timestamp(value):
-    if not value:
+
+    if value is None:
         return None
 
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        logger.warning("Invalid click timestamp received: %s", value)
-        return None
+
+        return datetime.fromtimestamp(float(value))
+
+    except Exception:
+
+        try:
+            return datetime.fromisoformat(
+                value.replace("Z", "+00:00")
+            )
+        except Exception:
+            return None
 
 
 async def worker():
@@ -47,10 +55,13 @@ async def worker():
 
         if not messages:
             continue
+        print(f"messages: {messages}")
 
         for _, entries in messages:
 
             db = SessionLocal()
+            
+            print("Committing")
 
             try:
 
@@ -67,7 +78,7 @@ async def worker():
                         ClickEvent(
                             eventId=event["eventId"],
                             shortCode=event["shortCode"],
-                            userId=event["userId"],
+                            userId=event["userId"], 
                             ipHash=event["ipHash"],
                             userAgent=event["browser"],
                             timestamp=parse_timestamp(event.get("timestamp")),
@@ -83,10 +94,12 @@ async def worker():
                                 "clientIp": event["clientIp"],
                             }
                         )
-
+                print(f"Batch:{batch}")
                 db.bulk_save_objects(batch)
 
                 db.commit()
+                
+                print("Commited")
 
                 for event in geo_events:
                     await redis.xadd(
