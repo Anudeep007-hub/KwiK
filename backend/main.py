@@ -2,12 +2,38 @@ import os
 
 from fastapi import FastAPI 
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 
 # Local imports
 from routes import router
 from db_config import Base, engine 
 
 Base.metadata.create_all(bind=engine)
+
+
+def ensure_schema_compatibility():
+    """Small compatibility bridge until the project has a migration runner."""
+
+    inspector = inspect(engine)
+
+    if "click_events" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("click_events")}
+
+    if "geoStatus" in columns:
+        return
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "ALTER TABLE click_events "
+                "ADD COLUMN \"geoStatus\" VARCHAR(16) NOT NULL DEFAULT 'PENDING'"
+            )
+        )
+
+
+ensure_schema_compatibility()
 
 app = FastAPI()
 

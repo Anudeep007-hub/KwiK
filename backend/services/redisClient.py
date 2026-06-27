@@ -1,0 +1,39 @@
+import os
+
+from redis.asyncio import Redis
+from redis.exceptions import ResponseError
+
+
+REDIS_URL = os.getenv("REDIS_URL") or "redis://127.0.0.1:6379/0"
+REDIS_TIMEOUT = float(os.getenv("REDIS_TIMEOUT_SECONDS", "0.2"))
+
+redis = Redis.from_url(
+    REDIS_URL,
+    decode_responses=True,
+    socket_connect_timeout=REDIS_TIMEOUT,
+    socket_timeout=REDIS_TIMEOUT,
+    health_check_interval=30,
+)
+
+
+def get_redis():
+    return redis
+
+
+async def disconnect_redis():
+    await redis.connection_pool.disconnect(inuse_connections=True)
+
+
+async def ensure_stream_group(stream: str, group: str):
+    redis_client = get_redis()
+
+    try:
+        await redis_client.xgroup_create(
+            name=stream,
+            groupname=group,
+            id="0",
+            mkstream=True,
+        )
+    except ResponseError as exc:
+        if "BUSYGROUP" not in str(exc):
+            raise

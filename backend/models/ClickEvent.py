@@ -18,5 +18,6 @@ class ClickEvent(Base):
     city = Column(String(200), nullable=True) 
     timezone = Column(String(100), nullable=True) 
     isp = Column(String(300), nullable=True)
+    geoStatus = Column(String(16), default="PENDING", nullable=False)
     
     
