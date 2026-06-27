@@ -4,6 +4,7 @@ import logging
 import os
 import uuid
 from datetime import datetime
+import traceback
 
 from database.session import SessionLocal
 from models.ClickEvent import ClickEvent
@@ -117,6 +118,7 @@ async def worker():
 
             except Exception:
                 db.rollback()
+                traceback.print_exc()
                 logger.exception("DB worker failed to process click batch")
 
             finally:

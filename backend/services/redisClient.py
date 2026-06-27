@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from redis.asyncio import Redis
 from redis.exceptions import ResponseError
@@ -10,8 +11,6 @@ REDIS_TIMEOUT = float(os.getenv("REDIS_TIMEOUT_SECONDS", "0.2"))
 redis = Redis.from_url(
     REDIS_URL,
     decode_responses=True,
-    socket_connect_timeout=REDIS_TIMEOUT,
-    socket_timeout=REDIS_TIMEOUT,
     health_check_interval=30,
 )
 
@@ -35,5 +34,6 @@ async def ensure_stream_group(stream: str, group: str):
             mkstream=True,
         )
     except ResponseError as exc:
+        traceback.print_exc()
         if "BUSYGROUP" not in str(exc):
             raise

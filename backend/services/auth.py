@@ -23,7 +23,7 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GITHUB_OAUTH_URL = "https://github.com/login/oauth/access_token"
 GITHUB_USER_URL = "https://api.github.com/user"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-# GOOGLE_USER_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+GOOGLE_USER_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 GOOGLE_TOKEN_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 
 # Redirect URIs

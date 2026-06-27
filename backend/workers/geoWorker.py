@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import uuid
+import traceback
 
 from database.session import SessionLocal
 from models.ClickEvent import ClickEvent
@@ -75,6 +76,7 @@ async def worker():
 
             except Exception:
                 db.rollback()
+                traceback.print_exc()
                 logger.exception("Geo worker failed to process geo event")
 
             finally:
