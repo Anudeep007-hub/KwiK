@@ -2,8 +2,8 @@ import asyncio
 import json
 import logging
 import os
-import uuid
 import traceback
+import uuid
 
 from database.session import SessionLocal
 from models.ClickEvent import ClickEvent
@@ -18,9 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 async def worker():
-
     redis = get_redis()
-    consumer_name = os.getenv("GEO_WORKER_NAME", f"geo-worker-{uuid.uuid4().hex[:8]}")
+
+    consumer_name = os.getenv(
+        "GEO_WORKER_NAME",
+        f"geo-worker-{uuid.uuid4().hex[:8]}",
+    )
 
     await ensure_stream_group(STREAM, GROUP)
 
@@ -30,58 +33,71 @@ async def worker():
             groupname=GROUP,
             consumername=consumer_name,
             streams={STREAM: ">"},
-            count=1,
+            count=20,
             block=5000,
         )
 
         if not messages:
             continue
 
-        for _, entries in messages:
+        db = SessionLocal()
 
-            db = SessionLocal()
+        try:
 
-            try:
+            ack_ids = []
+
+            for _, entries in messages:
 
                 for message_id, fields in entries:
 
                     event = json.loads(fields["data"])
 
-                    geo = await get_geo_data(
-                        event["clientIp"]
-                    )
+                    geo = await get_geo_data(event["clientIp"])
 
-                    status = "DONE" if geo else "FAILED"
+                    if geo:
+                        status = "DONE"
 
-                    db.query(ClickEvent).filter(
-                        ClickEvent.eventId == event["eventId"]
-                    ).update(
-                        {
-                            "country": geo.get("country"),
-                            "region": geo.get("regionName"),
-                            "city": geo.get("city"),
-                            "timezone": geo.get("timezone"),
-                            "isp": geo.get("isp"),
-                            "geoStatus": status,
-                        }
-                    )
+                        db.query(ClickEvent).filter(
+                            ClickEvent.eventId == event["eventId"]
+                        ).update(
+                            {
+                                "country": geo.get("country"),
+                                "region": geo.get("regionName"),
+                                "city": geo.get("city"),
+                                "timezone": geo.get("timezone"),
+                                "isp": geo.get("isp"),
+                                "geoStatus": status,
+                            }
+                        )
 
-                    db.commit()
+                    else:
+                        db.query(ClickEvent).filter(
+                            ClickEvent.eventId == event["eventId"]
+                        ).update(
+                            {
+                                "geoStatus": "FAILED",
+                            }
+                        )
 
-                    await redis.xack(
-                        STREAM,
-                        GROUP,
-                        message_id,
-                    )
+                    ack_ids.append(message_id)
 
-            except Exception:
-                db.rollback()
-                traceback.print_exc()
-                logger.exception("Geo worker failed to process geo event")
+            db.commit()
 
-            finally:
+            for message_id in ack_ids:
+                await redis.xack(
+                    STREAM,
+                    GROUP,
+                    message_id,
+                )
 
-                db.close()
+        except Exception:
+            db.rollback()
+            traceback.print_exc()
+            logger.exception("Geo worker failed")
+
+        finally:
+            db.close()
 
 
-asyncio.run(worker())
+if __name__ == "__main__":
+    asyncio.run(worker())

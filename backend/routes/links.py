@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from typing import Dict, Any
+import json
 
 from models.Link import Link, LinkStatus
 from models.ClickEvent import ClickEvent
@@ -12,7 +13,8 @@ from models.requests.linkRequest import LinkRequest
 from database.session import get_db
 from services.dependencies import get_current_user
 from services import base62Converter, uniqueIDGenerator
-from routes.serializers import serialize_link
+from routes.serializers import serialize_link 
+from services.redisClient import get_redis
 
 router = APIRouter(prefix="/v1/links", tags=["links"])
 
@@ -36,7 +38,19 @@ async def create_short_link(
         ownerId=user_id,
     )
     db.add(link)
-    db.commit()
+    db.commit() 
+    redis = get_redis() 
+    await redis.set(
+        f"links:{shortCode}",
+        json.dumps(
+            {
+                "longUrl":req.longUrl,
+                "ownerId":user_id,
+                "status":LinkStatus.ACTIVE.value
+            }
+        ), 
+        ex=70000,
+    )
     db.refresh(link)
 
     return {"shortCode": shortCode}
@@ -119,7 +133,19 @@ async def update_link_status(
         raise HTTPException(status_code=404, detail="Link not found or unauthorized")
 
     link.status = LinkStatus(payload.status)
-    db.commit()
+    db.commit() 
+    redis = get_redis() 
+    await redis.set( 
+        f"links:{shortCode}",  
+        json.dumps( 
+            {
+                "longUrl": link.longUrl,
+                "ownerId":link.ownerId,
+                "status":link.status.value,
+            }
+            ) ,
+        ex=86400,         
+        )
     db.refresh(link)
 
     click_count = (
