@@ -58,7 +58,7 @@ async def github_callback(code: str = Query(...), state: str = Query(...), db: S
         raise HTTPException(status_code=400, detail="Failed to fetch user information")
     
     # Extract user data
-    provider_user_id = str(user_info.get("id"))
+    provider_user_id = str(user_info.get("sub"))
     email = user_info.get("email") or f"github_{provider_user_id}@github.local"
     name = user_info.get("name") or user_info.get("login")
     
@@ -113,7 +113,7 @@ async def google_callback(code: str = Query(...), state: str = Query(...), db: S
         raise HTTPException(status_code=400, detail="Failed to fetch user information")
     
     # Extract user data
-    provider_user_id = user_info.get("id")
+    provider_user_id = user_info.get("sub")
     email = user_info.get("email")
     name = user_info.get("name")
     
