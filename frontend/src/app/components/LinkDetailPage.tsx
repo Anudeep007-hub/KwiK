@@ -6,7 +6,8 @@ import { Copy, Check, ExternalLink, XCircle, BarChart2, ArrowLeft, CircleOff } f
 import type { ClickEvent, Link as LinkType, LinkStatus } from "../../types/api";
 import { StatusBadge } from "./LinksPage";
 import { getShortUrl } from "../../services/apiConfig";
-import { getClickEvents, getLink, updateLinkStatus } from "../../services/linkService";
+import { getClickEvents, getLink, updateLinkStatus, updateLongUrl, deleteLink } from "../../services/linkService";
+
 
 const mono = "var(--font-mono, 'JetBrains Mono', monospace)";
 
@@ -38,6 +39,8 @@ export function LinkDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editedUrl, setEditedUrl] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -55,6 +58,7 @@ export function LinkDetailPage() {
       .then((data) => {
         if (!active) return;
         setLink(data);
+        setEditedUrl(data.longUrl);
         setStatus(data.status);
       })
       .catch((err) => {
@@ -143,7 +147,46 @@ export function LinkDetailPage() {
               </a>
               <StatusBadge status={status} />
             </div>
-            <p className="text-sm text-[#6B7280] mb-1 break-all">{link.longUrl}</p>
+            {/* <p className="text-sm text-[#6B7280] mb-1 break-all">{link.longUrl}</p> */}
+            {editing ? (
+              <div className="flex gap-2 mt-2">
+                <input
+                  value={editedUrl}
+                  onChange={(e) => setEditedUrl(e.target.value)}
+                  className="border rounded px-2 py-1 flex-1"
+                />
+
+                <button
+                  className="px-3 py-1 bg-blue-600 text-white rounded"
+                  onClick={async () => {
+                    await updateLongUrl(link.shortCode, editedUrl);
+
+                    setLink({
+                      ...link,
+                      longUrl: editedUrl,
+                    });
+
+                    setEditing(false);
+                  }}
+                >
+                  Save
+                </button>
+
+                <button
+                  className="px-3 py-1 border rounded"
+                  onClick={() => {
+                    setEditedUrl(link.longUrl);
+                    setEditing(false);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-[#6B7280] mb-1 break-all">
+                {link.longUrl}
+              </p>
+            )}
             <p className="text-xs text-[#9CA3AF]">
               Created {formatDate(link.createdAt)}
               {link.expiresAt && ` · Expires ${formatDate(link.expiresAt)}`}
@@ -173,22 +216,21 @@ export function LinkDetailPage() {
             </a>
             <button
               onClick={async () => {
-                      try {
-                        const newStatus =
-                          status === "ACTIVE" ? "DISABLED" : "ACTIVE";
+                try {
+                  const newStatus =
+                    status === "ACTIVE" ? "DISABLED" : "ACTIVE";
 
-                        await updateLinkStatus(link.shortCode, newStatus);
+                  await updateLinkStatus(link.shortCode, newStatus);
 
-                        setStatus(newStatus);
-                      } catch (err) {
-                        console.error(err);
-                      }
-                    }}
-                                  className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium border rounded transition-colors ${
-                status === "ACTIVE"
-                  ? "border-[#FCA5A5] text-[#DC2626] hover:bg-[#FEF2F2]"
-                  : "border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
-              }`}
+                  setStatus(newStatus);
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium border rounded transition-colors ${status === "ACTIVE"
+                ? "border-[#FCA5A5] text-[#DC2626] hover:bg-[#FEF2F2]"
+                : "border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
+                }`}
             >
               {status === "ACTIVE" ? (
                 <>
@@ -203,11 +245,29 @@ export function LinkDetailPage() {
               )}
             </button>
             <button
+              onClick={async () => {
+                if (!confirm("Delete this link?")) return;
+
+                await deleteLink(link.shortCode);
+
+                router.push("/links");
+              }}
+              className="flex items-center gap-1.5 h-9 px-3 text-sm font-medium border border-red-300 text-red-600 rounded hover:bg-red-50"
+            >
+              Delete
+            </button>
+            <button
               onClick={() => router.push("/analytics")}
               className="flex items-center gap-1.5 h-9 px-3 text-sm font-semibold bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8] transition-colors"
             >
               <BarChart2 size={13} />
               Analytics
+            </button>
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 h-9 px-3 text-sm font-medium border border-[#E5E7EB] rounded hover:bg-[#F9FAFB]"
+            >
+              Edit
             </button>
           </div>
         </div>
@@ -272,9 +332,8 @@ export function LinkDetailPage() {
                 {events.map((event, i) => (
                   <tr
                     key={event.eventId}
-                    className={`hover:bg-[#F9FAFB] transition-colors duration-100 ${
-                      i < events.length - 1 ? "border-b border-[#F3F4F6]" : ""
-                    }`}
+                    className={`hover:bg-[#F9FAFB] transition-colors duration-100 ${i < events.length - 1 ? "border-b border-[#F3F4F6]" : ""
+                      }`}
                   >
                     <td className="py-3 px-4 whitespace-nowrap" style={{ fontFamily: mono }}>
                       <span className="text-[#6B7280]">{formatDateTime(event.timestamp)}</span>

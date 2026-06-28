@@ -159,3 +159,96 @@ async def update_link_status(
         print(k, type(v), v)
 
     return data
+
+class LinkUpdateRequest(BaseModel):
+    longUrl: str
+
+
+@router.patch("/{shortCode}")
+async def update_long_url(
+    shortCode: str,
+    payload: LinkUpdateRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update destination URL (must be owner)."""
+
+    user_id = current_user.get("sub")
+
+    link = db.query(Link).filter(
+        Link.shortCode == shortCode,
+        Link.ownerId == user_id,
+    ).first()
+
+    if not link:
+        raise HTTPException(
+            status_code=404,
+            detail="Link not found or unauthorized",
+        )
+
+    link.longUrl = payload.longUrl
+
+    db.commit()
+    db.refresh(link)
+
+    redis = get_redis()
+
+    await redis.set(
+        f"links:{shortCode}",
+        json.dumps(
+            {
+                "longUrl": link.longUrl,
+                "ownerId": link.ownerId,
+                "status": link.status.value,
+            }
+        ),
+        ex=86400,
+    )
+
+    click_count = (
+        db.query(func.count(ClickEvent.eventId))
+        .filter(ClickEvent.shortCode == shortCode)
+        .scalar()
+    )
+
+    return serialize_link(link, click_count or 0)
+
+@router.delete("/{shortCode}")
+async def delete_link(
+    shortCode: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a link (must be owner)."""
+
+    user_id = current_user.get("sub")
+
+    link = db.query(Link).filter(
+        Link.shortCode == shortCode,
+        Link.ownerId == user_id,
+    ).first()
+
+    if not link:
+        raise HTTPException(
+            status_code=404,
+            detail="Link not found or unauthorized",
+        )
+
+    redis = get_redis()
+
+    # Remove Redis cache
+    await redis.delete(f"links:{shortCode}")
+
+    # Delete click analytics
+    db.query(ClickEvent).filter(
+        ClickEvent.shortCode == shortCode
+    ).delete()
+
+    # Delete link
+    db.delete(link)
+
+    db.commit()
+
+    return {
+        "message": "Link deleted successfully"
+    }

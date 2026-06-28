@@ -6,22 +6,20 @@ import { Search, Plus, ExternalLink } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import type { Link as LinkType, LinkStatus } from "../../types/api";
 import { getShortUrl } from "../../services/apiConfig";
-import { createShortLink, getLinks } from "../../services/linkService";
+import { createShortLink, getLinks, deleteLink } from "../../services/linkService";
 
 const mono = "var(--font-mono, 'JetBrains Mono', monospace)";
 
 export const StatusBadge = ({ status }: { status: LinkStatus }) => (
   <span
-    className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-      status === "ACTIVE"
+    className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${status === "ACTIVE"
         ? "bg-[#DCFCE7] text-[#16A34A]"
         : "bg-[#F3F4F6] text-[#6B7280]"
-    }`}
+      }`}
   >
     <span
-      className={`size-1.5 rounded-full ${
-        status === "ACTIVE" ? "bg-[#16A34A]" : "bg-[#9CA3AF]"
-      }`}
+      className={`size-1.5 rounded-full ${status === "ACTIVE" ? "bg-[#16A34A]" : "bg-[#9CA3AF]"
+        }`}
     />
     {status === "ACTIVE" ? "Active" : "Disabled"}
   </span>
@@ -181,11 +179,10 @@ export function LinksPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`h-9 px-3.5 text-xs font-medium transition-colors duration-100 ${
-                filter === f
+              className={`h-9 px-3.5 text-xs font-medium transition-colors duration-100 ${filter === f
                   ? "bg-[#F3F4F6] text-[#111827]"
                   : "bg-white text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#374151]"
-              } ${i > 0 ? "border-l border-[#E5E7EB]" : ""}`}
+                } ${i > 0 ? "border-l border-[#E5E7EB]" : ""}`}
             >
               {f === "ALL" ? "All" : f === "ACTIVE" ? "Active" : "Disabled"}{" "}
               <span className="text-[#9CA3AF] font-normal">{counts[f]}</span>
@@ -221,11 +218,10 @@ export function LinksPage() {
               <tr
                 key={link.shortCode}
                 onClick={() => router.push(`/links/${link.shortCode}`)}
-                className={`cursor-pointer hover:bg-[#F9FAFB] transition-colors duration-100 group ${
-                  i < filtered.length - 1 ? "border-b border-[#E5E7EB]" : ""
-                }`}
+                className={`cursor-pointer hover:bg-[#F9FAFB] transition-colors duration-100 group ${i < filtered.length - 1 ? "border-b border-[#E5E7EB]" : ""
+                  }`}
               >
-                <td className="py-3 px-4">
+                {/* <td className="py-3 px-4">
                   <a
                     href={getShortUrl(link.shortCode)}
                     target="_blank"
@@ -236,7 +232,41 @@ export function LinksPage() {
                   >
                     {getShortUrl(link.shortCode)}
                   </a>
+                </td> */}
+
+                <td className="py-3 px-4">
+                  <div className="flex items-center justify-end gap-3">
+
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+
+                        if (!confirm("Delete this link?")) return;
+
+                        await deleteLink(link.shortCode);
+
+                        setLinks((prev) =>
+                          prev.filter((l) => l.shortCode !== link.shortCode)
+                        );
+                      }}
+                      className="text-red-600 hover:text-red-700 text-xs opacity-0 group-hover:opacity-100 transition"
+                    >
+                      Delete
+                    </button>
+
+                    <a
+                      href={getShortUrl(link.shortCode)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[#9CA3AF] hover:text-[#6B7280] transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <ExternalLink size={13} />
+                    </a>
+
+                  </div>
                 </td>
+
                 <td className="py-3 px-4 max-w-[280px]">
                   <span
                     className="text-[#6B7280] text-xs truncate block"

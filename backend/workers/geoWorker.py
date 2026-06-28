@@ -13,6 +13,9 @@ from services.redisClient import ensure_stream_group, get_redis
 STREAM = "geo-stream"
 GROUP = "geo-workers"
 
+REQUESTS_PER_MINUTE = 40
+DELAY_BETWEEN_REQUESTS = 60 / REQUESTS_PER_MINUTE  # 1.5 seconds
+
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
@@ -52,11 +55,12 @@ async def worker():
 
                     event = json.loads(fields["data"])
 
+                    # -----------------------------
+                    # Rate-limited Geo Lookup
+                    # -----------------------------
                     geo = await get_geo_data(event["clientIp"])
 
                     if geo:
-                        status = "DONE"
-
                         db.query(ClickEvent).filter(
                             ClickEvent.eventId == event["eventId"]
                         ).update(
@@ -66,10 +70,9 @@ async def worker():
                                 "city": geo.get("city"),
                                 "timezone": geo.get("timezone"),
                                 "isp": geo.get("isp"),
-                                "geoStatus": status,
+                                "geoStatus": "DONE",
                             }
                         )
-
                     else:
                         db.query(ClickEvent).filter(
                             ClickEvent.eventId == event["eventId"]
@@ -80,6 +83,9 @@ async def worker():
                         )
 
                     ack_ids.append(message_id)
+
+                    # Wait 1.5 seconds before the next ip-api request
+                    await asyncio.sleep(DELAY_BETWEEN_REQUESTS)
 
             db.commit()
 

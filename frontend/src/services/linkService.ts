@@ -167,3 +167,41 @@ export async function getClickEvents(shortCode?: string) {
   return response.json() as Promise<ClickEvent[]>;
 }
 
+// Update longURL
+export async function updateLongUrl(shortCode: string, longUrl: string) {
+  const response = await fetch(
+    `${apiConfig.baseUrl}/v1/links/${shortCode}`,
+    {
+      method: "PATCH",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ longUrl }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Unable to update link");
+  }
+
+  return response.json();
+}
+
+// Delete long url
+export async function deleteLink(shortCode: string) {
+  const response = await fetch(
+    `${apiConfig.baseUrl}/v1/links/${shortCode}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Unable to delete link");
+  }
+
+  return response.json();
+}
+
