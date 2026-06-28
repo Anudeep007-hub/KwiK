@@ -6,11 +6,12 @@ from redis.exceptions import ResponseError
 
 
 REDIS_URL = os.getenv("REDIS_URL") or "redis://127.0.0.1:6379/0"
-REDIS_TIMEOUT = float(os.getenv("REDIS_TIMEOUT_SECONDS", "0.2"))
 
 redis = Redis.from_url(
     REDIS_URL,
     decode_responses=True,
+    socket_connect_timeout=10,
+    socket_timeout=None,
     health_check_interval=30,
 )
 
