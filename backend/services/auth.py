@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 from urllib.parse import urlencode
+import traceback
 
 load_dotenv()
 
@@ -23,9 +24,7 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GITHUB_OAUTH_URL = "https://github.com/login/oauth/access_token"
 GITHUB_USER_URL = "https://api.github.com/user"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-GOOGLE_USER_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
-GOOGLE_TOKEN_URL = "https://openidconnect.googleapis.com/v1/userinfo"
-
+GOOGLE_USER_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 # Redirect URIs
 GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI", "http://localhost:3000/auth/callback/github")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:3000/auth/callback/google")
@@ -90,12 +89,19 @@ class GitHubOAuth:
                     },
                     headers={"Accept": "application/json"},
                 )
-                if response.status_code == 200:
-                    data = response.json()
-                    return data.get("access_token")
-        except Exception as e:
-            print(f"Error exchanging GitHub code: {e}")
-        return None
+                print(response.status_code)
+                print(response.text)
+
+                response.raise_for_status()
+
+                data = response.json()
+
+                return data["access_token"]
+
+
+        except Exception:
+            traceback.print_exc()
+            raise
     
     @staticmethod
     async def get_user_info(access_token: str) -> Optional[Dict[str, Any]]:
