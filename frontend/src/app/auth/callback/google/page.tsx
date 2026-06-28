@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as linkService from '@/services/linkService';
@@ -10,53 +10,49 @@ function GoogleCallbackContent() {
   const searchParams = useSearchParams();
   const { login } = useAuth();
 
+  const handled = useRef(false);
+
   useEffect(() => {
-    const handleCallback = async () => {
-      const code = searchParams.get('code');
-      const state = searchParams.get('state');
-      const error = searchParams.get('error');
+    if (handled.current) return;
+    handled.current = true;
+
+    const handle = async () => {
+      const code = searchParams.get("code");
+      const state = searchParams.get("state");
+      const error = searchParams.get("error");
 
       if (error) {
-        console.error('OAuth error:', error);
-        router.push('/login?error=' + error);
+        router.replace("/login");
         return;
       }
 
       if (!code || !state) {
-        router.push('/login?error=missing_params');
+        router.replace("/login");
         return;
       }
 
       try {
         const response = await linkService.handleGoogleCallback(code, state);
-        if (response?.token && response?.user) {
-          login(response.token, response.user);
-          router.push('/links');
-        }
-      } catch (error) {
-        console.error('Google callback error:', error);
-        router.push('/login?error=auth_failed');
+
+        login(response.token, response.user);
+
+        router.replace("/links");
+      } catch (e) {
+        console.error(e);
+        router.replace("/login");
       }
     };
 
-    handleCallback();
-  }, [searchParams, router, login]);
+    handle();
 
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <div className="mb-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        </div>
-        <p className="text-gray-600">Authenticating with Google...</p>
-      </div>
-    </div>
-  );
+  }, []);
+
+  return <p>Signing in...</p>;
 }
 
-export default function GoogleCallbackPage() {
+export default function Page() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<p>Loading...</p>}>
       <GoogleCallbackContent />
     </Suspense>
   );
