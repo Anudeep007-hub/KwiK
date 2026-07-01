@@ -1,75 +1,31 @@
-from locust import HttpUser, task, between
+import os
 import random
-import threading
+from locust import HttpUser, task, between
 
+# Load links from file once at startup
+with open("links.txt", "r") as f:
+    # Assuming the file contains shortcodes, one per line
+    PRELOADED_SHORTCODES = [line.strip() for line in f if line.strip()]
 
-class URLShortenerUser(HttpUser):
-
-    wait_time = between(1, 3)
-
-    urls = []
-    short_codes = []
-
-    lock = threading.Lock()
-
+class KwikLoadTest(HttpUser):
+    # Short wait time for high throughput
+    wait_time = between(0.1, 0.5)
+    
     def on_start(self):
+        # Bypass authentication using a header your backend recognizes as 'authorized'
+        self.headers = {
+            "Authorization": f"Bearer {os.getenv('KWIK_AUTH_TOKEN')}",
+            "Content-Type": "application/json"
+        }
 
-        if not URLShortenerUser.urls:
+    @task(7)
+    def redirect_link(self):
+        """Focus on high-speed redirection."""
+        short_code = random.choice(PRELOADED_SHORTCODES)
+        self.client.get(f"/v1/{short_code}", name="/v1/[shortcode]")
 
-            with open("urls.txt") as f:
-
-                URLShortenerUser.urls = (
-                    f.read()
-                    .splitlines()
-                )
-
-    @task(20)
-    def create_short_url(self):
-
-        long_url = random.choice(
-            URLShortenerUser.urls
-        )
-
-        response = self.client.post(
-            "/v1/links",
-            json={
-                "longUrl": long_url
-            },
-            name="POST /v1/links"
-        )
-
-        if response.status_code == 200:
-
-            try:
-
-                short_code = (
-                    response.json()
-                    .get("shortCode")
-                )
-
-                if short_code:
-
-                    with URLShortenerUser.lock:
-
-                        URLShortenerUser.short_codes.append(
-                            short_code
-                        )
-
-            except Exception:
-                pass
-
-    @task(80)
-    def redirect_url(self):
-
-        if not URLShortenerUser.short_codes:
-            return
-
-        short_code = random.choice(
-            URLShortenerUser.short_codes
-        )
-
-        self.client.get(
-            f"/{short_code}",
-            allow_redirects=False,
-            name="GET /{shortCode}"
-        )
+    @task(3)
+    def create_link(self):
+        """Focus on link creation."""
+        payload = {"longUrl": f"https://example.com/target-{random.randint(1, 100000)}"}
+        self.client.post("/v1/links", json=payload, headers=self.headers)

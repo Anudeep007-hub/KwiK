@@ -20,7 +20,7 @@ if DB_URL.startswith("postgres://"):
         1
     )
     
-engine = create_engine(DB_URL)
+engine = create_engine(DB_URL, pool_size=50, max_overflow=100)
 
 SessionLocal = sessionmaker(autoflush=False, bind=engine) 
 
